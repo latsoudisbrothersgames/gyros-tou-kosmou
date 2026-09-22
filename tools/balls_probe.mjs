@@ -22,7 +22,9 @@ await withPreview(async ({ page }) => {
       // Οι μπάλες κρύβονται μέχρι την απάντηση (22.09.2026), άρα η σωστή επιλογή βρίσκεται από το iso2
       // του αρχείου σημαίας της ερώτησης (π.χ. /assets/gr-AbC12345.svg → «gr»), όχι από τις μπάλες.
       const flag = document.querySelector('.question-card__flag');
-      const match = /\/([a-z]{2}(?:-[a-z0-9]+)?)-[A-Za-z0-9_-]{6,}\.svg$/.exec(flag?.getAttribute('src') ?? '');
+      // Μικρές σημαίες γίνονται inline data: URI από το Vite (id='flag-icons-xx'), μεγάλες μένουν αρχεία (/assets/xx-hash.svg).
+      const src = decodeURIComponent(flag?.getAttribute('src') ?? '');
+      const match = /flag-icons-([a-z]{2}(?:-[a-z0-9]+)?)'/.exec(src) ?? /\/([a-z]{2}(?:-[a-z0-9]+)?)-[A-Za-z0-9_-]{6,}\.svg$/.exec(src);
       const choice = match ? document.querySelector(`.choice[data-choice-id="${match[1]}"]`) : null;
       if (!choice) throw new Error('Δεν βρέθηκε η σωστή σημαία στο DOM');
       return choice.getAttribute('data-choice-id');
