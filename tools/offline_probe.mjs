@@ -38,6 +38,8 @@ await withPreview(async ({ context, page }) => {
       if (route === '/play/country') {
         const before = await page.locator('.question-card').getAttribute('data-question-id');
         await page.locator('.choice').first().click();
+        // Η επόμενη ερώτηση έρχεται με το κουμπί «Επόμενη Ερώτηση» (ή Enter), όχι αυτόματα.
+        await page.locator('button:has-text("Επόμενη")').first().click();
         await page.waitForFunction((previous) => document.querySelector('.question-card')?.dataset.questionId !== previous && document.querySelectorAll('.choice:not(:disabled)').length === 4, before);
       }
       if (route === '/map') await page.locator('.worldmap__country').first().waitFor();
