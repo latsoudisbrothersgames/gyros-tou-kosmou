@@ -11,3 +11,11 @@
 Αρχεία: `src/game/newModes.ts`, `src/hooks/useNewModeSession.ts`, `src/pages/{WhoAmIGamePage,NewModeLayout}.tsx`, `src/pages/NewModes.css`, `src/game/scoring.ts`, προσθήκες σε CountryBall, τύπους, ρυθμίσεις παιχνιδιών και routes. Τα υπάρχοντα modes και οι τύποι βαθμολόγησής τους δεν αλλάζουν.
 
 Απόφαση: χειροκίνητο «Επόμενη ερώτηση» για να υπάρχει χρόνος ανάγνωσης. Το focus ισχύει μέσα στο tier της επιλεγμένης δυσκολίας. Build, lint, test:engine PASS μετά το Mode 1. Το browser QA ακολουθεί μετά και τα τρία modes.
+
+## Mode 2 — Παρέλαση Σημαιών
+
+3/4/5 σημαίες σε δύο λωρίδες, CSS translateX με σταθερές χρονικές αποστάσεις, διέλευση 9/7/5 s. Πολλαπλασιασμός ταχύτητας ×1,1 ανά τρεις σωστές, έως ×2. Άμεσο pointerdown, πληκτρολόγιο, στόχοι 76×84 px. Πάγωμα 800 ms, λήξη όταν φύγει η σωστή, `parade:miss` → sad και «Έφυγα!». Η στατική παραλλαγή κρατά σημαίες και χρονόμετρο κύκλου. Ο υπάρχων τύπος χρόνου βαθμολογίας εφαρμόζεται στο ποσοστό της διέλευσης της σωστής μπάλας.
+
+Αρχεία: `src/pages/ParadeGamePage.tsx`, `src/hooks/useReducedMotion.ts`, επεκτάσεις στη νέα ροή, CSS, events/rules, routes και tests. PASS build, lint, test:engine, test:reactions.
+
+Διευκρίνιση του spec: η Παρέλαση εξαιρεί ρητά τις σημαίες από τον κανόνα απόκρυψης. Το probe θα επιβάλλει απουσία ονομάτων και αποκαλυπτικών accessible labels στις επιλογές πριν απαντηθούν. Στα άλλα δύο modes θα ελέγχει πλήρη απουσία εικόνων σημαίας από το DOM της ερώτησης.

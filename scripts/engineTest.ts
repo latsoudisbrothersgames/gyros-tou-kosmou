@@ -86,5 +86,13 @@ for (let i = 0; i < 60; i++) {
   check(round.choices.includes(round.country), 'mystery answer available');
 }
 
+const { paradeSettings } = await import('../src/game/newModes');
+for (const [difficulty, count, seconds] of [['easy', 3, 9], ['medium', 4, 7], ['hard', 5, 5]] as const) {
+  const parade = new NewModeStream({ mode: 'parade', difficulty, length: 10 });
+  check(parade.next().choices.length === count, `parade count ${difficulty}`);
+  check(paradeSettings(difficulty, 0).durationMs === seconds * 1000, `parade duration ${difficulty}`);
+  check(paradeSettings(difficulty, 3).speed === 1.1, `parade acceleration ${difficulty}`);
+  check(paradeSettings(difficulty, 100).speed === 2, `parade speed cap ${difficulty}`);
+}
 console.log(fails === 0 ? 'ENGINE OK' : `${fails} failures`);
 process.exit(fails ? 1 : 0);

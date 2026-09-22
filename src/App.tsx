@@ -6,6 +6,7 @@ import { Navigation } from './components/Navigation/Navigation';
 import { HomePage } from './pages/HomePage';
 import { GamesPage } from './pages/GamesPage';
 import { QuizGamePage } from './pages/QuizGamePage';
+import { ParadeGamePage } from './pages/ParadeGamePage';
 import { WhoAmIGamePage } from './pages/WhoAmIGamePage';
 import { ScratchGamePage } from './pages/ScratchGamePage';
 import { EncyclopediaPage } from './pages/EncyclopediaPage';
@@ -52,6 +53,7 @@ export default function App() {
                   <Route path="/games" element={<GamesPage />} />
                   <Route path="/games/:mode" element={<GamesPage />} />
                   <Route path="/play/map" element={<MapGamePage />} />
+                  <Route path="/play/parade" element={<ParadeGamePage />} />
                   <Route path="/play/whoami" element={<WhoAmIGamePage />} />
                   <Route path="/play/scratch" element={<ScratchGamePage />} />
                   <Route path="/play/:mode" element={<QuizGamePage />} />

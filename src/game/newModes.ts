@@ -1,7 +1,14 @@
 import type { Country } from '../types/country';
 import { CONTINENT_LABELS, formatPopulationGreek } from '../types/country';
-import type { GameConfig } from '../types/game';
+import type { DifficultyId, GameConfig } from '../types/game';
 import { generateCountryDistractors, getCountriesByDifficulty, shuffle } from './questionGenerator';
+
+/** Η διάρκεια αφορά μία ολόκληρη διέλευση, με όριο διπλάσιας ταχύτητας. */
+export function paradeSettings(difficulty: DifficultyId, correctAnswers: number) {
+  const base = { easy: { count: 3, seconds: 9 }, medium: { count: 4, seconds: 7 }, hard: { count: 5, seconds: 5 } }[difficulty];
+  const speed = Math.min(2, 1.1 ** Math.floor(correctAnswers / 3));
+  return { count: base.count, durationMs: base.seconds * 1000 / speed, speed };
+}
 
 export interface ModeRound {
   id: string;
@@ -44,7 +51,8 @@ export class NewModeStream {
     if (!this.queue.length) this.queue = shuffle(this.pool);
     const country = this.focus ?? this.queue.pop()!;
     if (this.focus) { this.queue = this.queue.filter(c => c !== this.focus); this.focus = undefined; }
+    const count = this.config.mode === 'parade' ? paradeSettings(this.config.difficulty, 0).count : 4;
     return { id: `new-${++roundCounter}`, country,
-      choices: shuffle([country, ...generateCountryDistractors(country, 3, this.config.difficulty, this.pool)]) };
+      choices: shuffle([country, ...generateCountryDistractors(country, count - 1, this.config.difficulty, this.pool)]) };
   }
 }

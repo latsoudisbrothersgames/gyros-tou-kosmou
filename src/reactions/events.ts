@@ -3,6 +3,7 @@ export type ReactionEvent =
   | { type: 'answer:correct'; iso2: string; streak: number }
   | { type: 'answer:wrong'; chosen: string; correct: string }
   | { type: 'timer:low'; secondsLeft: number }
+  | { type: 'parade:miss'; iso2: string }
   | { type: 'idle'; seconds: number }
   | { type: 'game:end'; won: string[]; lost: string[] }
   | { type: 'country:open'; iso2: string }

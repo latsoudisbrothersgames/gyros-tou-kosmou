@@ -102,3 +102,8 @@ assert.equal(calls, 1);
 bus.emit({ type: 'idle', seconds: 10 });
 assert.equal(calls, 2);
 console.log('PASS event bus, replay, αποσύνδεση και καθαρισμός στην αλλαγή σελίδας');
+
+mood({ type: 'parade:miss', iso2: 'gr' }, 'gr', 'sad');
+mood({ type: 'parade:miss', iso2: 'gr' }, 'jp', undefined);
+assert.equal(reactionFor({ type: 'parade:miss', iso2: 'gr' }, 'gr')?.steps[0].durationMs, 2000);
+console.log('PASS parade:miss στόχος, άσχετη χώρα και διάρκεια');

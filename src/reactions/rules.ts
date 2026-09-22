@@ -18,6 +18,8 @@ export function reactionFor(event: ReactionEvent, iso2: string): Reaction | null
       ], speech: 'mood' };
     case 'timer:low':
       return { steps: [{ mood: event.secondsLeft > 0 && event.secondsLeft < 3 ? 'nervous' : 'idle' }] };
+    case 'parade:miss':
+      return event.iso2 === iso2 ? { steps: [{ mood: 'sad', durationMs: 2000 }, { mood: 'idle' }] } : null;
     case 'idle':
       return { steps: [{ mood: 'sleepy' }], speech: 'mood' };
     case 'game:end': {
