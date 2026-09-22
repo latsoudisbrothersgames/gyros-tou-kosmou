@@ -63,8 +63,11 @@ export function clearScores(): void {
 }
 
 export function loadSettings(): Settings {
-  const stored = readStorage<Settings>(SETTINGS_KEY, DEFAULT_SETTINGS, isSettings);
-  return { ...DEFAULT_SETTINGS, ...stored };
+  const stored = readStorage<Settings>(SETTINGS_KEY, { ...DEFAULT_SETTINGS, reducedMotion: typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches }, isSettings);
+  return { ...DEFAULT_SETTINGS, ...stored,
+    reducedMotion: typeof stored.reducedMotion === 'boolean' ? stored.reducedMotion
+      : typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches,
+  };
 }
 
 export function saveSettings(settings: Settings): void {

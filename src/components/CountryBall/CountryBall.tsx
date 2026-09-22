@@ -1,6 +1,7 @@
-import { useId, type CSSProperties } from 'react';
+import { useId, useEffect, useRef, useState, type CSSProperties } from 'react';
 import type { Country } from '../../types/country';
 import { getFlagUrl } from '../Flag/flagAssets';
+import { useReactions } from '../../reactions/ReactionsProvider';
 import { useBallReaction } from '../../reactions/useBallReaction';
 import type { BallMood } from '../../reactions/events';
 export type { BallMood } from '../../reactions/events';
@@ -130,7 +131,14 @@ export function CountryBall({
   mood: explicitMood,
   reactive = true,
 }: CountryBallProps) {
-  const reaction = useBallReaction(country.iso2, reactive && explicitMood === undefined);
+  const rootRef = useRef<HTMLDivElement>(null);
+  const reactions = useReactions();
+  const [live, setLive] = useState(false);
+  useEffect(() => {
+    const element = rootRef.current;
+    if (element && reactions) return reactions.registerBall(element, setLive);
+  }, [reactions]);
+  const reaction = useBallReaction(country.iso2, live && reactive && explicitMood === undefined);
   const mood = explicitMood ?? reaction.mood;
   const uid = useId().replace(/[^a-zA-Z0-9]/g, '');
   const flagUrl = getFlagUrl(country.iso2);
@@ -138,7 +146,9 @@ export function CountryBall({
   const shadeId = `cb-shade-${uid}`;
   const ch = characterFor(country.iso2);
   const delay = animationDelay ?? `${ch.delay.toFixed(2)}s`;
-  const moodClass = mood !== 'idle' ? `countryball--${mood}` : '';
+  const moodClass = `countryball--${mood}`;
+  const mouthKind = ['surprised', 'sleepy', 'nervous'].includes(mood) ? 2
+    : ['celebrate', 'dance', 'happy'].includes(mood) ? 3 : mood === 'idle' ? ch.mouth : 0;
 
   const ballStyle = {
     width: size,
@@ -151,7 +161,7 @@ export function CountryBall({
   } as CSSProperties;
 
   return (
-    <div className={`countryball ${moodClass} ${className}`} style={ballStyle} aria-hidden="true">
+    <div ref={rootRef} data-iso2={country.iso2} data-live={live} className={`countryball ${moodClass} ${!live ? 'countryball--static' : ''} ${className}`} style={ballStyle} aria-hidden="true">
       <svg
         className="countryball__svg"
         viewBox="0 0 100 108"
@@ -203,7 +213,7 @@ export function CountryBall({
           <circle cx="50" cy="52" r="48.4" fill="none" stroke="#ffffff" strokeWidth="2.8" opacity="0.9" />
 
           {/* Μαγουλάκια */}
-          {ch.blush && (
+          {(ch.blush || mood === 'shy') && (
             <g>
               <ellipse cx={ch.eyeLeftCx - 7} cy={ch.eyeCy + 14} rx="5.5" ry="3.2" fill="rgba(255,107,107,0.4)" />
               <ellipse cx={ch.eyeRightCx + 7} cy={ch.eyeCy + 14} rx="5.5" ry="3.2" fill="rgba(255,107,107,0.4)" />
@@ -215,16 +225,16 @@ export function CountryBall({
             <g className="countryball__eye">
               <ellipse cx={ch.eyeLeftCx} cy={ch.eyeCy} rx={ch.eyeRx} ry={ch.eyeRy} fill="#fff" stroke="rgba(8,33,56,0.75)" strokeWidth="2" />
               <circle className="countryball__pupil" cx={ch.eyeLeftCx + ch.pupilDx} cy={ch.eyeCy + ch.pupilDy} r="4" fill="#14283c" />
-              <circle cx={ch.eyeLeftCx + ch.pupilDx + 1.5} cy={ch.eyeCy + ch.pupilDy - 2} r="1.4" fill="#fff" />
+              <circle className="countryball__pupil" cx={ch.eyeLeftCx + ch.pupilDx + 1.5} cy={ch.eyeCy + ch.pupilDy - 2} r="1.4" fill="#fff" />
             </g>
             <g className="countryball__eye">
               <ellipse cx={ch.eyeRightCx} cy={ch.eyeCy} rx={ch.eyeRx} ry={ch.eyeRy} fill="#fff" stroke="rgba(8,33,56,0.75)" strokeWidth="2" />
               <circle className="countryball__pupil" cx={ch.eyeRightCx + ch.pupilDx} cy={ch.eyeCy + ch.pupilDy} r="4" fill="#14283c" />
-              <circle cx={ch.eyeRightCx + ch.pupilDx + 1.5} cy={ch.eyeCy + ch.pupilDy - 2} r="1.4" fill="#fff" />
+              <circle className="countryball__pupil" cx={ch.eyeRightCx + ch.pupilDx + 1.5} cy={ch.eyeCy + ch.pupilDy - 2} r="1.4" fill="#fff" />
             </g>
             {/* Φρύδια */}
-            {ch.brows && (
-              <g stroke="rgba(8,33,56,0.7)" strokeWidth="2.4" strokeLinecap="round">
+            {(ch.brows || mood !== 'idle') && (
+              <g className="countryball__brows" stroke="rgba(8,33,56,0.7)" strokeWidth="2.4" strokeLinecap="round">
                 <line
                   x1={ch.eyeLeftCx - 6}
                   y1={ch.eyeCy - ch.eyeRy - 4}
@@ -249,7 +259,30 @@ export function CountryBall({
           </g>
 
           {/* Στόμα */}
-          <Mouth kind={ch.mouth} cy={ch.eyeCy} />
+          {mood === 'sad' || mood === 'shrug' ? (
+            <path d={mood === 'sad' ? 'M40 68 Q50 58 60 68' : 'M41 64 L59 62'} fill="none" stroke="#14283c" strokeWidth="2.6" strokeLinecap="round" />
+          ) : <Mouth kind={mouthKind} cy={ch.eyeCy} />}
+          {(mood === 'sleepy' || mood === 'shy' || mood === 'thinking') && (
+            <g fill="#8aa9bb" stroke="#14283c" strokeWidth="1">
+              <path d={`M${ch.eyeLeftCx - ch.eyeRx} ${ch.eyeCy} a${ch.eyeRx} ${ch.eyeRy} 0 0 1 ${ch.eyeRx * 2} 0 Z`} />
+              <path d={`M${ch.eyeRightCx - ch.eyeRx} ${ch.eyeCy} a${ch.eyeRx} ${ch.eyeRy} 0 0 1 ${ch.eyeRx * 2} 0 Z`} />
+            </g>
+          )}
+          {mood === 'nervous' && <path className="countryball__sweat" d="M80 24 Q69 40 80 41 Q90 40 80 24Z" fill="#55cfff" stroke="#0d2f4f" />}
+          {mood === 'sleepy' && <text className="countryball__zzz" x="70" y="16" fontSize="15" fill="#0d2f4f">ζζζ</text>}
+          {(mood === 'wave' || mood === 'shrug') && (
+            <g fill="none" stroke="#0d2f4f" strokeWidth="3" strokeLinecap="round">
+              <path className="countryball__hand" d="M90 63 Q105 59 102 42 M102 42 l-5 -4 M102 42 l5 -5" />
+              {mood === 'shrug' && <path d="M10 63 Q-5 58 -2 46 M-2 46 l-4 -3 M-2 46 l5 -4" />}
+            </g>
+          )}
+          {mood === 'celebrate' && (
+            <g className="countryball__confetti">
+              {['#ff6b6b', '#ffd45c', '#5ccea6', '#a684e8', '#55cfff', '#ffad72'].map((color, index) => (
+                <rect key={color} x={8 + index * 16} y={-8 + (index % 2) * 12} width="4" height="7" rx="1" fill={color} transform={`rotate(${index * 25} ${10 + index * 16} 0)`} />
+              ))}
+            </g>
+          )}
         </g>
       </svg>
     </div>

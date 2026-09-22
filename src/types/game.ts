@@ -106,12 +106,14 @@ export interface ScoreEntry {
 
 export interface Settings {
   soundEnabled: boolean;
+  reducedMotion: boolean;
   lastDifficulty: DifficultyId;
   lastPlayerName: string;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
   soundEnabled: true,
+  reducedMotion: false,
   lastDifficulty: 'easy',
   lastPlayerName: '',
 };

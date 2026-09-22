@@ -151,3 +151,53 @@
     transform: translateY(6px);
   }
 }
+
+/* Η κίνηση των ματιών γράφεται απευθείας από τον κοινό πάροχο. */
+.countryball { position: relative; }
+.countryball__pupil { transform: translate(var(--cb-look-x, 0px), var(--cb-look-y, 0px)); }
+.countryball--surprised { animation: countryball-surprised 0.6s ease-out; }
+.countryball--thinking { animation: countryball-thinking 2s ease-in-out infinite; }
+.countryball--proud { animation: countryball-proud 2.5s ease-in-out infinite; }
+.countryball--shy { animation: countryball-shy 1.8s ease-in-out infinite; }
+.countryball--sleepy { animation: countryball-sleepy 3s ease-in-out infinite; }
+.countryball--nervous { animation: countryball-nervous 0.16s linear infinite; }
+.countryball--celebrate { animation: countryball-celebrate 0.65s ease-in-out infinite; }
+.countryball--wave { animation: countryball-wave 1s ease-in-out infinite; }
+.countryball--shrug { animation: countryball-shrug 1.2s ease-in-out infinite; }
+.countryball--surprised .countryball__eyes { transform: translateY(-2px); }
+.countryball--thinking .countryball__brows { transform: rotate(-8deg); transform-origin: center; }
+.countryball--proud .countryball__brows { transform: translateY(-3px); }
+.countryball--nervous .countryball__brows { transform: rotate(6deg); transform-origin: center; }
+.countryball--shrug .countryball__brows { transform: translateY(-4px); }
+.countryball__confetti { animation: countryball-confetti 0.8s ease-out infinite; }
+.countryball__hand { transform-origin: 90px 63px; }
+.countryball--wave .countryball__hand { animation: countryball-hand 0.45s ease-in-out infinite alternate; }
+.countryball__sweat { animation: countryball-drop 0.8s ease-in infinite; }
+.countryball__zzz { animation: countryball-dream 2s ease-in-out infinite; }
+@keyframes countryball-surprised { 0%, 100% { transform: scale(1); } 40% { transform: translateY(-7px) scale(1.1); } }
+@keyframes countryball-thinking { 50% { transform: rotate(-6deg) translateY(-2px); } }
+@keyframes countryball-proud { 50% { transform: scale(1.05) translateY(-3px); } }
+@keyframes countryball-shy { 50% { transform: translateY(7px) rotate(7deg) scale(0.94); } }
+@keyframes countryball-sleepy { 50% { transform: translateY(5px) rotate(-5deg); } }
+@keyframes countryball-nervous { 25% { transform: translateX(-1px); } 75% { transform: translateX(1px); } }
+@keyframes countryball-celebrate { 40% { transform: translateY(-14px) rotate(6deg); } 80% { transform: scale(1.05, 0.95); } }
+@keyframes countryball-wave { 50% { transform: rotate(-5deg) translateY(-4px); } }
+@keyframes countryball-shrug { 40%, 60% { transform: translateY(-4px) scale(1.05, 0.96); } }
+@keyframes countryball-confetti { from { transform: translateY(-5px); opacity: 1; } to { transform: translateY(18px); opacity: 0; } }
+@keyframes countryball-hand { to { transform: rotate(22deg); } }
+@keyframes countryball-drop { to { transform: translateY(6px); opacity: 0.4; } }
+@keyframes countryball-dream { 50% { transform: translateY(-4px); opacity: 0.5; } }
+
+/* Οι υπόλοιπες φιγούρες κρατούν την έκφρασή τους χωρίς animations. */
+.countryball--static, .countryball--static *,
+.countryball[data-motion="reduced"], .countryball[data-motion="reduced"] * {
+  animation: none !important;
+  will-change: auto;
+}
+.countryball[data-motion="reduced"] .countryball__confetti { display: none; }
+.countryball[data-motion="reduced"] .countryball__pupil { transform: none; }
+@media (prefers-reduced-motion: reduce) {
+  .countryball, .countryball * { animation: none !important; will-change: auto; }
+  .countryball__confetti { display: none; }
+  .countryball__pupil { transform: none; }
+}
