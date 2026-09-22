@@ -147,3 +147,18 @@
   .choice__label { min-width: 100px; overflow-wrap: anywhere; }
   .choice__result { margin-left: auto; font-size: 0.85rem; }
 }
+
+/* Θέση της μπάλας πριν την απάντηση: ουδέτερος κύκλος, ίδιο μέγεθος, για να μην πηδά η διάταξη */
+.choice__ball-mystery {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  flex: 0 0 42px;
+  border-radius: 50%;
+  background: var(--ocean-100, #dbe8f5);
+  color: var(--ocean-500, #5b7ea3);
+  font-weight: 800;
+  font-size: 1.1rem;
+}

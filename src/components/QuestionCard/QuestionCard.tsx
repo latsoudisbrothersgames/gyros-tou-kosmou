@@ -75,7 +75,9 @@ export function QuestionCard({
       >
         {question.choices.map((choice, index) => {
           const choiceCountry = countryForChoice(question, choice);
-          const showBall = question.type !== 'COUNTRY_TO_CAPITAL' || answered;
+          // 22.09.2026 (Apollo): οι μπάλες έχουν τη σημαία της χώρας και προδίδουν τη λύση —
+          // εμφανίζονται ΜΟΝΟ αφού δοθεί απάντηση, σε όλα τα modes. Πριν, ένα ουδέτερο «μυστήριο».
+          const showBall = answered;
           const isCorrect = choice.id === question.correctAnswerId;
           const isSelected = choice.id === selectedAnswerId;
           const isEliminated = !answered && eliminatedIds.includes(choice.id);
@@ -101,6 +103,9 @@ export function QuestionCard({
             >
               {showBall && choiceCountry && (
                 <CountryBall country={choiceCountry} size={42} />
+              )}
+              {!showBall && choiceCountry && (
+                <span className="choice__ball-mystery" aria-hidden="true">?</span>
               )}
               <span className="choice__key" aria-hidden="true">{index + 1}</span>
               {flagChoices && choice.flagIso2 ? (
