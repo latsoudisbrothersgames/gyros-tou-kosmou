@@ -1,5 +1,5 @@
 import { QuestionStream, getCountriesByDifficulty } from '../src/game/questionGenerator';
-import { applyHintPenalty, scoreCorrectAnswer } from '../src/game/scoring';
+import { applyHintPenalty, scoreCorrectAnswer, scoreWithHints } from '../src/game/scoring';
 import { LANDMARK_BY_ID, LANDMARKS_BY_ISO2 } from '../src/data/landmarks';
 import type { GameConfig } from '../src/types/game';
 
@@ -64,6 +64,27 @@ for (let i = 0; i < 30; i++) {
 // βοήθεια: μισοί πόντοι
 const hp = applyHintPenalty(scoreCorrectAnswer(0, 0));
 check(hp.total === 75, `hint penalty on 150 should be 75, got ${hp.total}`);
+
+for (const [hints, expected] of [[0, 100], [1, 70], [2, 45], [3, 25], [9, 25], [-1, 100]]) {
+  check(scoreWithHints(hints, 0).total === expected, `hints ${hints}`);
+  check(scoreWithHints(hints, 20).total === expected + 100, `hints streak cap ${hints}`);
+}
+const { mysteryHints, safeMysteryFact, NewModeStream } = await import('../src/game/newModes');
+const { ALL_COUNTRIES } = await import('../src/data/countries');
+for (const country of ALL_COUNTRIES) {
+  check(mysteryHints(country).length === 3, `three hints ${country.iso2}`);
+  const fact = safeMysteryFact(country).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+  for (const name of [country.nameGreek, country.capitalGreek]) {
+    check(!fact.includes(name.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()), `unsafe hint ${country.iso2}`);
+  }
+}
+const mysteryStream = new NewModeStream({ mode: 'whoami', difficulty: 'easy', length: 10, focusCountryId: 'jp' });
+check(mysteryStream.next().country.iso2 === 'jp', 'mystery focus');
+for (let i = 0; i < 60; i++) {
+  const round = mysteryStream.next();
+  check(new Set(round.choices.map(c => c.iso2)).size === 4, 'mystery distinct choices');
+  check(round.choices.includes(round.country), 'mystery answer available');
+}
 
 console.log(fails === 0 ? 'ENGINE OK' : `${fails} failures`);
 process.exit(fails ? 1 : 0);

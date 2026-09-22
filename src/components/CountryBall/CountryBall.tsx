@@ -22,6 +22,8 @@ interface CountryBallProps {
   /** idle: ήρεμο αιώρημα · happy: χαρούμενα άλματα · dance: χορός · sad: στενοχώρια */
   mood?: BallMood;
   reactive?: boolean;
+  /** Η κρυμμένη σημαία απουσιάζει εντελώς από το DOM. */
+  concealed?: boolean;
 }
 
 /** Ντετερμινιστική «τυχαιότητα» από το iso2 — ίδια χώρα, ίδιος χαρακτήρας */
@@ -132,6 +134,7 @@ export function CountryBall({
   animationDelay,
   mood: explicitMood,
   reactive = true,
+  concealed = false,
 }: CountryBallProps) {
   const rootRef = useRef<HTMLDivElement>(null);
   const reactions = useReactions();
@@ -140,10 +143,10 @@ export function CountryBall({
     const element = rootRef.current;
     if (element && reactions) return reactions.registerBall(element, setLive);
   }, [reactions]);
-  const reaction = useBallReaction(country.iso2, live && reactive && explicitMood === undefined);
+  const reaction = useBallReaction(country.iso2, live && reactive && !concealed && explicitMood === undefined);
   const mood = explicitMood ?? reaction.mood;
   const uid = useId().replace(/[^a-zA-Z0-9]/g, '');
-  const flagUrl = getFlagUrl(country.iso2);
+  const flagUrl = concealed ? undefined : getFlagUrl(country.iso2);
   const clipId = `cb-clip-${uid}`;
   const shadeId = `cb-shade-${uid}`;
   const ch = characterFor(country.iso2);
@@ -163,7 +166,7 @@ export function CountryBall({
   } as CSSProperties;
 
   return (
-    <div ref={rootRef} data-iso2={country.iso2} data-live={live} className={`countryball ${moodClass} ${!live ? 'countryball--static' : ''} ${className}`} style={ballStyle}>
+    <div ref={rootRef} data-iso2={concealed ? undefined : country.iso2} data-live={live} className={`countryball ${moodClass} ${!live ? 'countryball--static' : ''} ${className}`} style={ballStyle}>
       {reaction.speech && (
         <SpeechBubble key={`${country.iso2}-${reaction.speech.sequence}`} lines={
           reaction.speech.reaction.speech === 'greeting' ? [countryGreeting(country), countryFact(country)]
@@ -196,6 +199,7 @@ export function CountryBall({
           {/* Σώμα-σημαία */}
           {flagUrl ? (
             <image
+              className="countryball__flag"
               href={flagUrl}
               x="-14"
               y="4"
@@ -205,7 +209,7 @@ export function CountryBall({
               clipPath={`url(#${clipId})`}
             />
           ) : (
-            <circle cx="50" cy="52" r="46" fill="#9db8cc" />
+            <circle cx="50" cy="52" r="46" fill={concealed ? "#46515c" : "#9db8cc"} />
           )}
           {/* Σφαιρική σκίαση */}
           <circle cx="50" cy="52" r="46" fill={`url(#${shadeId})`} />

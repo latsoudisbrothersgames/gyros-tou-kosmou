@@ -46,3 +46,10 @@ export function applyHintPenalty(b: ScoreBreakdown): ScoreBreakdown {
 export function formatScore(points: number): string {
   return points.toLocaleString('el-GR');
 }
+
+/** Πόντοι μυστηρίου, χωρίς μπόνους χρόνου· το σερί μετριέται πριν την απάντηση. */
+export function scoreWithHints(hintsUsed: number, streak: number): ScoreBreakdown {
+  const base = [100, 70, 45, 25][Math.max(0, Math.min(3, Math.trunc(hintsUsed)))];
+  const streakBonus = Math.min(Math.max(0, streak), MAX_STREAK_BONUS_STEPS) * STREAK_BONUS_PER_STEP;
+  return { base, streakBonus, timeBonus: 0, total: base + streakBonus };
+}

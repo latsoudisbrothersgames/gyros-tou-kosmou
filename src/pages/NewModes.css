@@ -1,0 +1,21 @@
+/* Νέα παιχνίδια: πρώτα η μικρή οθόνη και η αφή. */
+.new-mode { max-width: 700px; margin: auto; }
+.new-mode__top { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; font-weight: 800; }
+.new-mode__top a { display: inline-flex; align-items: center; min-height: 44px; }
+.new-mode__round { padding: 18px; text-align: center; margin-top: 12px; }
+.new-mode__round h1 { font-size: clamp(1.2rem, 5vw, 1.8rem); margin: 0; }
+.new-mode__choices { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.new-mode__choice { min-height: 56px; min-width: 0; display: flex; justify-content: center; align-items: center; gap: 6px; padding: 10px; border: 2px solid var(--ocean-100); border-radius: 16px; background: var(--surface-alt); color: var(--text-900); font: inherit; font-weight: 800; overflow-wrap: anywhere; }
+.new-mode__choice:focus-visible { outline: 3px solid var(--ocean-500); outline-offset: 3px; }
+.new-mode__choice--correct { border-color: #24805a; background: #e1f8ea; }
+.new-mode__choice--wrong { border-color: #c34c4c; background: #fff0ed; }
+.new-mode__feedback { margin-top: 16px; font-weight: 800; }
+.new-mode__feedback p { margin: 6px 0 12px; }
+.mystery__stage { display: flex; justify-content: center; padding-top: 106px; padding-bottom: 12px; }
+.mystery__speaker { position: relative; }
+.mystery__hints { margin-bottom: 16px; }
+.mystery__hints p { font-size: .78rem; margin: 8px 0; }
+.new-mode__reveal .countryball__flag { animation: mystery-reveal .6s ease-out both; }
+@keyframes mystery-reveal { from { opacity: 0; } to { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .new-mode__reveal .countryball__flag { animation: none; } }
+html[data-reduced-motion="true"] .new-mode__reveal .countryball__flag { animation: none; }

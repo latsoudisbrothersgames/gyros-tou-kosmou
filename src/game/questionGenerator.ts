@@ -235,6 +235,8 @@ function questionTypesForMode(config: GameConfig): QuestionType[] {
       return ['FIND_ON_MAP'];
     case 'landmark':
       return ['LANDMARK_TO_COUNTRY'];
+    case 'whoami':
+      throw new Error('Το νέο mode έχει δική του ροή ερωτήσεων.');
     case 'scratch':
       // Η σελίδα «Ξύσε τη Σημαία» χρειάζεται επιλογές τύπου σημαία → χώρα
       return ['FLAG_TO_COUNTRY'];

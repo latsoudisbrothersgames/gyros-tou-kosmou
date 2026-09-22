@@ -19,6 +19,7 @@ const MODES: { id: GameModeId; icon: string; text: string; accent: string }[] = 
   { id: 'flags', icon: '🎌', text: 'Πρόκληση αναγνώρισης σημαιών', accent: 'leaf' },
   { id: 'map', icon: '📍', text: 'Δείξε τη χώρα στον παγκόσμιο χάρτη', accent: 'grape' },
   { id: 'landmark', icon: '🗼', text: 'Μάντεψε τη χώρα από το διάσημο μνημείο', accent: 'ocean' },
+  { id: 'whoami', icon: '🕵️', text: 'Μάντεψε τη χώρα με τρεις ενδείξεις', accent: 'grape' },
   { id: 'scratch', icon: '🖐️', text: 'Ξύσε το κάλυμμα και μάντεψε τη σημαία', accent: 'coral' },
 ];
 
@@ -37,7 +38,7 @@ function isGameMode(v: string | undefined): v is GameModeId {
     v === 'flags' ||
     v === 'map' ||
     v === 'landmark' ||
-    v === 'scratch'
+    v === 'scratch' || v === 'whoami'
   );
 }
 

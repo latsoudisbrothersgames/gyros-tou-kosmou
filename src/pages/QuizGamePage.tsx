@@ -27,7 +27,7 @@ export function parseGameConfig(
     mode !== 'flags' &&
     mode !== 'map' &&
     mode !== 'landmark' &&
-    mode !== 'scratch'
+    mode !== 'scratch' && mode !== 'whoami'
   ) {
     return null;
   }
