@@ -235,6 +235,7 @@ function questionTypesForMode(config: GameConfig): QuestionType[] {
       return ['FIND_ON_MAP'];
     case 'landmark':
       return ['LANDMARK_TO_COUNTRY'];
+    case 'bigger':
     case 'parade':
     case 'whoami':
       throw new Error('Το νέο mode έχει δική του ροή ερωτήσεων.');

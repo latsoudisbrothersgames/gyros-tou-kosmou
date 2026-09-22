@@ -10,10 +10,21 @@ export function paradeSettings(difficulty: DifficultyId, correctAnswers: number)
   return { count: base.count, durationMs: base.seconds * 1000 / speed, speed };
 }
 
+export type ComparisonMetric = 'population' | 'areaKm2';
+export function comparisonRatio(difficulty: DifficultyId) {
+  return { easy: 3, medium: 1.5, hard: 1.15 }[difficulty];
+}
+export function validComparison(a: Country, b: Country, metric: ComparisonMetric, difficulty: DifficultyId) {
+  const x = a[metric], y = b[metric];
+  return a.iso2 !== b.iso2 && x != null && y != null && Number.isFinite(x) && Number.isFinite(y)
+    && x > 0 && y > 0 && Math.max(x, y) / Math.min(x, y) >= comparisonRatio(difficulty);
+}
+
 export interface ModeRound {
   id: string;
   country: Country;
   choices: Country[];
+  metric?: ComparisonMetric;
 }
 
 /** Αγνοούμε τόνους και πτώσεις στις συνηθισμένες καταλήξεις των ονομάτων. */
@@ -39,6 +50,7 @@ export function mysteryHints(country: Country): string[] {
 let roundCounter = 0;
 export class NewModeStream {
   private queue: Country[] = [];
+  private index = 0;
   private config: GameConfig;
   private pool: Country[];
   private focus?: Country;
@@ -48,6 +60,18 @@ export class NewModeStream {
     this.focus = this.pool.find(country => country.iso2 === config.focusCountryId);
   }
   next(): ModeRound {
+    if (this.config.mode === 'bigger') {
+      const metric: ComparisonMetric = this.index++ % 2 === 0 ? 'population' : 'areaKm2';
+      const candidates = shuffle(this.pool);
+      if (this.focus) { candidates.unshift(this.focus); this.focus = undefined; }
+      for (const first of candidates) {
+        const second = shuffle(this.pool).find(other => validComparison(first, other, metric, this.config.difficulty));
+        if (!second) continue;
+        const country = first[metric]! > second[metric]! ? first : second;
+        return { id: `new-${++roundCounter}`, country, choices: shuffle([first, second]), metric };
+      }
+      throw new Error('Δεν υπάρχουν συγκρίσιμες χώρες σε αυτό το επίπεδο.');
+    }
     if (!this.queue.length) this.queue = shuffle(this.pool);
     const country = this.focus ?? this.queue.pop()!;
     if (this.focus) { this.queue = this.queue.filter(c => c !== this.focus); this.focus = undefined; }

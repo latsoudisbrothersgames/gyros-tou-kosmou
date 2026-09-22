@@ -94,5 +94,25 @@ for (const [difficulty, count, seconds] of [['easy', 3, 9], ['medium', 4, 7], ['
   check(paradeSettings(difficulty, 3).speed === 1.1, `parade acceleration ${difficulty}`);
   check(paradeSettings(difficulty, 100).speed === 2, `parade speed cap ${difficulty}`);
 }
+const { validComparison, comparisonRatio } = await import('../src/game/newModes');
+for (const difficulty of ['easy', 'medium', 'hard'] as const) {
+  const stream = new NewModeStream({ mode: 'bigger', difficulty, length: 20 });
+  for (let i = 0; i < 200; i++) {
+    const round = stream.next();
+    const metric = i % 2 === 0 ? 'population' : 'areaKm2';
+    const [a, b] = round.choices;
+    check(round.metric === metric, 'bigger alternates metrics');
+    check(validComparison(a, b, metric, difficulty), `valid bigger pair ${difficulty}`);
+    check(round.choices.every(c => getCountriesByDifficulty(difficulty).includes(c)), 'bigger tiers');
+    check(round.country[metric] === Math.max(a[metric]!, b[metric]!), 'bigger correct answer');
+    check(Math.max(a[metric]!, b[metric]!) / Math.min(a[metric]!, b[metric]!) >= comparisonRatio(difficulty), 'bigger ratio');
+  }
+}
+const [a, b] = ALL_COUNTRIES;
+check(!validComparison({ ...a, population: undefined }, b, 'population', 'hard'), 'missing population excluded');
+check(!validComparison({ ...a, areaKm2: 0 }, b, 'areaKm2', 'hard'), 'zero area excluded');
+check(!validComparison({ ...a, population: Infinity }, b, 'population', 'hard'), 'infinite population excluded');
+check(!validComparison({ ...a, population: 114 }, { ...b, population: 100 }, 'population', 'hard'), 'close pair excluded');
+check(validComparison({ ...a, population: 115 }, { ...b, population: 100 }, 'population', 'hard'), '15 percent boundary included');
 console.log(fails === 0 ? 'ENGINE OK' : `${fails} failures`);
 process.exit(fails ? 1 : 0);

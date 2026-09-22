@@ -37,3 +37,12 @@ html[data-reduced-motion="true"] .new-mode__reveal .countryball__flag { animatio
 @keyframes parade-clock { to { stroke-dashoffset: 100.53; } }
 .parade__miss { position: relative; width: 64px; margin: 62px auto 0; }
 .countryball[data-motion="reduced"] .countryball__flag { animation: none; }
+
+.bigger__choices { margin-top: 24px; }
+.bigger__choice { flex-direction: column; justify-content: flex-start; gap: 16px; padding: 16px 8px; }
+.bigger__ball { display: block; margin: 14px 0; transition: transform .5s ease; }
+.bigger__ball--large { transform: scale(1.25); }
+.bigger__value { font-size: .85rem; min-height: 2.5em; }
+.bigger__winner { color: #246343; font-size: .8rem; }
+.bigger__choices--reduced .bigger__ball { transition: none; }
+@media (prefers-reduced-motion: reduce) { .bigger__ball { transition: none; } }
