@@ -159,6 +159,8 @@ await withPreview(async ({ page }) => {
   // Και οι δύο πηγές reduced motion, χωρίς ολίσθηση και με λειτουργικό χρονόμετρο.
   for (const source of ['system', 'setting']) {
     await page.emulateMedia({ reducedMotion: source === 'system' ? 'reduce' : 'no-preference' });
+    // Ίδιο URL με την οθόνη αποτελεσμάτων → χωρίς hashchange· πέρασμα από την αρχική πρώτα.
+    await page.goto(`${base}#/`);
     await page.goto(`${base}#/play/parade?focus=jp&length=endless`);
     if (source === 'setting') {
       await page.getByLabel('Ρυθμίσεις παιχνιδιού').click();
