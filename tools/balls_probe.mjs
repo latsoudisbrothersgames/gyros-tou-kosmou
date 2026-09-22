@@ -19,8 +19,11 @@ await withPreview(async ({ page }) => {
   async function correctId() {
     await page.waitForFunction(() => document.querySelectorAll('.choice:not(:disabled)').length === 4);
     return page.evaluate(() => {
+      // Οι μπάλες κρύβονται μέχρι την απάντηση (22.09.2026), άρα η σωστή επιλογή βρίσκεται από το iso2
+      // του αρχείου σημαίας της ερώτησης (π.χ. /assets/gr-AbC12345.svg → «gr»), όχι από τις μπάλες.
       const flag = document.querySelector('.question-card__flag');
-      const choice = [...document.querySelectorAll('.choice')].find((button) => button.querySelector('image')?.getAttribute('href') === flag?.getAttribute('src'));
+      const match = /\/([a-z]{2}(?:-[a-z0-9]+)?)-[A-Za-z0-9_-]{6,}\.svg$/.exec(flag?.getAttribute('src') ?? '');
+      const choice = match ? document.querySelector(`.choice[data-choice-id="${match[1]}"]`) : null;
       if (!choice) throw new Error('Δεν βρέθηκε η σωστή σημαία στο DOM');
       return choice.getAttribute('data-choice-id');
     });
