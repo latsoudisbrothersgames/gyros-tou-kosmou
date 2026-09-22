@@ -134,13 +134,12 @@ export function CountryPage() {
         <header className="atlas__head">
           <span className="atlas__continent">{CONTINENT_LABELS[country.continent]}</span>
           <h1 className="atlas__name">{country.nameGreek}</h1>
-          <p className="atlas__english">{country.nameEnglish}</p>
         </header>
 
         <div className="atlas__body">
           {/* ── Οπτική στήλη: ο «ήρωας» του άτλαντα ── */}
           <div className="atlas__visual">
-            <div className="atlas__scene" aria-hidden="true">
+            <div className="atlas__scene">
               <div className="atlas__halo" />
               <div className="atlas__silhouette">
                 <CountrySilhouette iso2={country.iso2} />

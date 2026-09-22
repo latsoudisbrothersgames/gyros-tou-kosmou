@@ -7,6 +7,7 @@ import {
   scoreWrongAnswer,
   type ScoreBreakdown,
 } from '../game/scoring';
+import { vibrate } from '../utils/haptics';
 import { useReactions } from '../reactions/ReactionsProvider';
 import { addToCollection } from '../utils/collection';
 
@@ -99,6 +100,7 @@ export function useGameSession(config: GameConfig, restrictToIso2?: Set<string>)
           ],
         };
       });
+      vibrate(correct ? 35 : [25, 60, 25]);
       reactions?.emit(correct
         ? { type: 'answer:correct', iso2: question.countryId, streak: state.streak + 1 }
         : { type: 'answer:wrong', chosen: answerId, correct: question.countryId });

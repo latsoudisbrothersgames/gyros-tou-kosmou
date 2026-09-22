@@ -46,6 +46,9 @@ export function Navigation() {
             </li>
           ))}
         </ul>
+        <details className="nav__settings">
+          <summary aria-label="Ρυθμίσεις παιχνιδιού" title="Ρυθμίσεις">⚙️</summary>
+          <div className="nav__settings-panel">
         <button
           type="button"
           className="nav__sound"
@@ -61,8 +64,14 @@ export function Navigation() {
             }
           }}
         >
-          {settings.soundEnabled ? '🔊' : '🔇'}
+          {settings.soundEnabled ? '🔊 Ήχος: Ναι' : '🔇 Ήχος: Όχι'}
         </button>
+            <label><input type="checkbox" checked={settings.hapticsEnabled}
+              onChange={(event) => updateSettings({ hapticsEnabled: event.target.checked })} /> Δονήσεις</label>
+            <label><input type="checkbox" checked={settings.reducedMotion}
+              onChange={(event) => updateSettings({ reducedMotion: event.target.checked })} /> Λιγότερη κίνηση</label>
+          </div>
+        </details>
       </nav>
     </header>
   );

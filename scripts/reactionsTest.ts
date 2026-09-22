@@ -50,3 +50,33 @@ remove[0](); active.delete(0);
 assert.equal(active.size, 8); assert.ok(active.has(8));
 remove.forEach((dispose) => dispose());
 console.log('PASS όριο 8 φιγούρων, αναπλήρωση θέσης, κόρες έως 3px, λιγότερη κίνηση');
+
+const { BALL_LINES, countryGreeting, countryFact, pickBallLine } = await import('../src/data/ballLines.ts');
+for (const [name, lines] of Object.entries(BALL_LINES)) {
+  assert.ok(lines.length >= 6, name);
+  assert.equal(new Set(lines).size, lines.length);
+  assert.ok(lines.every((line) => /[Α-Ωα-ω]/.test(line)));
+  for (let variation = -8; variation < 12; variation++) {
+    assert.ok(lines.includes(pickBallLine(name as keyof typeof BALL_LINES, 'gr', variation)));
+  }
+}
+const fixture = { nameGreek: 'Ελλάδα', nameGreekAccusative: 'την Ελλάδα', factsGreek: ['Έχει πολλά νησιά.', 'Βρίσκεται στην Ευρώπη.'], capitalGreek: 'Αθήνα' } as import('../src/types/country.ts').Country;
+assert.equal(countryGreeting(fixture), 'Γεια! Είμαι η Ελλάδα');
+assert.equal(countryGreeting({ ...fixture, nameGreek: 'Καναδάς', nameGreekAccusative: 'τον Καναδά' }), 'Γεια! Είμαι ο Καναδάς');
+assert.equal(countryGreeting({ ...fixture, nameGreek: 'Βέλγιο', nameGreekAccusative: 'το Βέλγιο' }), 'Γεια! Είμαι το Βέλγιο');
+assert.equal(countryGreeting({ ...fixture, nameGreekAccusative: 'Ελλάδα' }), 'Γεια! Είμαι Ελλάδα');
+assert.equal(countryFact(fixture), 'Ήξερες ότι… Έχει πολλά νησιά.');
+assert.equal(countryFact(fixture, 1), 'Ήξερες ότι… Βρίσκεται στην Ευρώπη.');
+assert.ok(countryFact({ ...fixture, factsGreek: [] }).includes('Αθήνα'));
+assert.equal(pickBallLine('wave', 'gr', 1), pickBallLine('wave', 'gr', 1));
+assert.notEqual(pickBallLine('wave', 'gr', 1), pickBallLine('wave', 'gr', 2));
+const { vibrate, setHapticsEnabled } = await import('../src/utils/haptics.ts');
+const patterns: unknown[] = [];
+Object.defineProperty(globalThis.navigator, 'vibrate', { configurable: true, value: (pattern: unknown) => patterns.push(pattern) });
+vibrate(35); vibrate([25, 60, 25]);
+assert.deepEqual(patterns, [35, [25, 60, 25]]);
+setHapticsEnabled(false); vibrate(100); assert.equal(patterns.length, 2);
+setHapticsEnabled(true);
+Object.defineProperty(globalThis.navigator, 'vibrate', { configurable: true, value: undefined });
+assert.doesNotThrow(() => vibrate(35));
+console.log('PASS 78 ατάκες, επιλογέας, άρθρα, στοιχεία εγκυκλοπαίδειας και δονήσεις');

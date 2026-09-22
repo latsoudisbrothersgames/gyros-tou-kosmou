@@ -107,6 +107,7 @@ export interface ScoreEntry {
 export interface Settings {
   soundEnabled: boolean;
   reducedMotion: boolean;
+  hapticsEnabled: boolean;
   lastDifficulty: DifficultyId;
   lastPlayerName: string;
 }
@@ -114,6 +115,7 @@ export interface Settings {
 export const DEFAULT_SETTINGS: Settings = {
   soundEnabled: true,
   reducedMotion: false,
+  hapticsEnabled: true,
   lastDifficulty: 'easy',
   lastPlayerName: '',
 };

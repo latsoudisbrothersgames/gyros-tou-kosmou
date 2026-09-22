@@ -65,6 +65,7 @@ export function clearScores(): void {
 export function loadSettings(): Settings {
   const stored = readStorage<Settings>(SETTINGS_KEY, { ...DEFAULT_SETTINGS, reducedMotion: typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches }, isSettings);
   return { ...DEFAULT_SETTINGS, ...stored,
+    hapticsEnabled: typeof stored.hapticsEnabled === 'boolean' ? stored.hapticsEnabled : true,
     reducedMotion: typeof stored.reducedMotion === 'boolean' ? stored.reducedMotion
       : typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches,
   };

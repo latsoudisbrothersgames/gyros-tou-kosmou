@@ -5,6 +5,8 @@ import { useReactions } from '../../reactions/ReactionsProvider';
 import { useBallReaction } from '../../reactions/useBallReaction';
 import type { BallMood } from '../../reactions/events';
 export type { BallMood } from '../../reactions/events';
+import { SpeechBubble } from '../SpeechBubble/SpeechBubble';
+import { countryFact, countryGreeting, pickBallLine } from '../../data/ballLines';
 import './CountryBall.css';
 
 /** Διάθεση/κίνηση του χαρακτήρα */
@@ -161,8 +163,16 @@ export function CountryBall({
   } as CSSProperties;
 
   return (
-    <div ref={rootRef} data-iso2={country.iso2} data-live={live} className={`countryball ${moodClass} ${!live ? 'countryball--static' : ''} ${className}`} style={ballStyle} aria-hidden="true">
+    <div ref={rootRef} data-iso2={country.iso2} data-live={live} className={`countryball ${moodClass} ${!live ? 'countryball--static' : ''} ${className}`} style={ballStyle}>
+      {reaction.speech && (
+        <SpeechBubble key={`${country.iso2}-${reaction.speech.sequence}`} lines={
+          reaction.speech.reaction.speech === 'greeting' ? [countryGreeting(country), countryFact(country)]
+            : reaction.speech.reaction.speech === 'fact' ? [countryFact(country, reaction.speech.sequence - 1)]
+            : [pickBallLine(reaction.speech.reaction.steps[0].mood, country.iso2, reaction.speech.sequence)]
+        } audible={reaction.speech.event.type !== 'answer:correct' || reaction.speech.event.iso2 === country.iso2} />
+      )}
       <svg
+        aria-hidden="true"
         className="countryball__svg"
         viewBox="0 0 100 108"
         width={size}
