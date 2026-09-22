@@ -3,8 +3,9 @@
   bottom: calc(100% + 10px);
   left: 50%;
   transform: translateX(-50%);
-  width: 240px;
-  max-width: calc(100vw - 48px);
+  width: max-content;
+  min-width: 140px;
+  max-width: min(280px, calc(100vw - 32px));
   padding: 8px 12px;
   border: 2px solid #0d2f4f;
   border-radius: 16px;
@@ -15,14 +16,15 @@
   font-weight: 700;
   line-height: 1.35;
   text-align: center;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
+  /* 22.09.2026: ολόκληρη η πρόταση, όσες γραμμές χρειάζεται — ποτέ κομμένες λέξεις */
+  white-space: normal;
+  overflow-wrap: break-word;
+  hyphens: manual;
   pointer-events: none;
   z-index: 10;
 }
-.choice .speech-bubble { left: -8px; transform: none; width: 210px; font-size: 0.75rem; }
-.collection__tap .speech-bubble { width: 180px; }
+.choice .speech-bubble { left: -8px; transform: none; max-width: min(240px, calc(100vw - 48px)); font-size: 0.75rem; }
+.collection__tap .speech-bubble { max-width: min(260px, calc(100vw - 32px)); }
+.speech-bubble--long { font-size: 0.78rem; line-height: 1.3; }
 .collection__item:has(.speech-bubble) { z-index: 3; }
 .countryball:has(.speech-bubble) { z-index: 2; }

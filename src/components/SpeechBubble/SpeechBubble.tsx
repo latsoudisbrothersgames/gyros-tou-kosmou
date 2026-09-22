@@ -28,9 +28,11 @@ export function SpeechBubble({ lines, audible = true }: { lines: string[]; audib
       if (characters <= text.length) playSound('blip');
       else clearInterval(blips);
     }, Math.min(90, 2200 / Math.max(1, Math.floor(text.length / 3)))) : undefined;
-    const hide = setTimeout(() => setIndex((current) => current + 1), 2500);
+    // Διάρκεια ανάλογη με το μήκος: 2,5 s για μικρές ατάκες, έως 7 s για μεγάλα «Ήξερες ότι…»
+    const duration = Math.min(7000, Math.max(2500, 1200 + text.length * 60));
+    const hide = setTimeout(() => setIndex((current) => current + 1), duration);
     return () => { clearInterval(blips); clearTimeout(hide); };
   }, [text, audible]);
   if (!text) return null;
-  return <span ref={bubbleRef} className="speech-bubble" role="status" aria-live="polite" aria-label={text} title={text}>{text}</span>;
+  return <span ref={bubbleRef} className={`speech-bubble${text.length > 70 ? ' speech-bubble--long' : ''}`} role="status" aria-live="polite" aria-label={text} title={text}>{text}</span>;
 }
