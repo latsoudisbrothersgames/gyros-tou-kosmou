@@ -177,3 +177,5 @@
   gap: var(--space-3);
   flex-wrap: wrap;
 }
+
+.game-results__parade { display: flex; flex-wrap: wrap; gap: 0.75rem; justify-content: center; margin: 1.5rem 0; }

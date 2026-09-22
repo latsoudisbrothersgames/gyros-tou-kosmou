@@ -12,6 +12,8 @@ import { ScoreDisplay } from '../components/ScoreDisplay/ScoreDisplay';
 import { GameResults } from '../components/GameResults/GameResults';
 import { Button } from '../components/Button/Button';
 import { parseGameConfig } from './QuizGamePage';
+import { CountryBall } from '../components/CountryBall/CountryBall';
+import { useReactions } from '../reactions/ReactionsProvider';
 import './MapGamePage.css';
 
 const AUTO_ADVANCE_MS = 3000;
@@ -56,6 +58,9 @@ function MapGameSession({
   const navigate = useNavigate();
   const session = useGameSession(config, availableIso2);
   const { state, question, selectedAnswerId } = session;
+  const reactions = useReactions();
+  const nearRef = useRef<boolean | null>(null);
+  useEffect(() => { nearRef.current = null; }, [question.id]);
   const mapRef = useRef<WorldMapHandle>(null);
   const autoAdvanceRef = useRef<number | null>(null);
 
@@ -105,7 +110,20 @@ function MapGameSession({
   }
 
   return (
-    <div className="mapgame">
+    <div className="mapgame" onPointerMove={(event) => {
+      if (answered) return;
+      const path = event.currentTarget.querySelector<SVGPathElement>(`path[data-iso2="${question.countryId}"]`);
+      const matrix = path?.getScreenCTM();
+      if (!path || !matrix) return;
+      const box = path.getBBox();
+      const center = new DOMPoint(box.x + box.width / 2, box.y + box.height / 2).matrixTransform(matrix);
+      const distancePx = Math.hypot(event.clientX - center.x, event.clientY - center.y);
+      const near = distancePx < 80;
+      if (near !== nearRef.current) {
+        nearRef.current = near;
+        reactions?.emit({ type: 'map:near', iso2: question.countryId, distancePx });
+      }
+    }}>
       <div className="mapgame__top">
         <Button variant="ghost" onClick={() => navigate('/games')} aria-label="Έξοδος από το παιχνίδι">
           ← Έξοδος
@@ -127,6 +145,7 @@ function MapGameSession({
       <ExplorerPassport stops={state.answers} totalQuestions={session.totalQuestions} compact />
 
       <h2 className="mapgame__prompt">{question.prompt}</h2>
+      {targetCountry && <CountryBall country={targetCountry} size={72} />}
 
       <WorldMap
         ref={mapRef}

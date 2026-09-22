@@ -2,6 +2,7 @@ import type { Question } from '../../types/game';
 import { getCountryByIsoCode } from '../../data/countries';
 import { LANDMARK_BY_ID } from '../../data/landmarks';
 import { continentVars } from '../../theme/continents';
+import { CountryBall } from '../CountryBall/CountryBall';
 import { Flag } from '../Flag/Flag';
 import { LandmarkArt } from '../LandmarkArt/LandmarkArt';
 import './QuestionCard.css';
@@ -83,6 +84,7 @@ export function QuestionCard({
 
           return (
             <button
+              data-choice-id={choice.id}
               key={choice.id}
               type="button"
               className={`choice ${flagChoices ? 'choice--flag' : ''} ${stateClass}`}
@@ -94,6 +96,9 @@ export function QuestionCard({
                   : `Επιλογή ${index + 1}: ${choice.label}`
               }
             >
+              {getCountryByIsoCode(choice.id) && (
+                <CountryBall country={getCountryByIsoCode(choice.id)!} size={42} />
+              )}
               <span className="choice__key" aria-hidden="true">{index + 1}</span>
               {flagChoices && choice.flagIso2 ? (
                 <Flag iso2={choice.flagIso2} size="lg" className="choice__flag-img" />

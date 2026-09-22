@@ -12,6 +12,7 @@ import { GameResults } from '../components/GameResults/GameResults';
 import { Button } from '../components/Button/Button';
 import { CountryBall } from '../components/CountryBall/CountryBall';
 import { getCountryByIsoCode } from '../data/countries';
+import { useQuizReactions } from '../reactions/useQuizReactions';
 import './QuizGamePage.css';
 
 const AUTO_ADVANCE_MS = 2200;
@@ -77,6 +78,7 @@ function QuizSession({ config }: { config: GameConfig }) {
   const navigate = useNavigate();
   const session = useGameSession(config);
   const { state, question, selectedAnswerId, lastBreakdown } = session;
+  useQuizReactions(question, selectedAnswerId !== null, state.finished);
   const autoAdvanceRef = useRef<number | null>(null);
 
   const handleAnswer = useCallback(
@@ -161,9 +163,6 @@ function QuizSession({ config }: { config: GameConfig }) {
             <CountryBall
               country={correctCountry}
               size={92}
-              mood={
-                answeredCorrectly ? (state.streak >= 3 ? 'dance' : 'happy') : 'sad'
-              }
             />
           )}
           {answeredCorrectly ? (

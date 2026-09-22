@@ -243,6 +243,7 @@ export const WorldMap = forwardRef<WorldMapHandle, WorldMapProps>(function World
             return (
               <path
                 key={`${c.isoNumeric}-${c.iso2 ?? 'x'}`}
+                data-iso2={c.iso2}
                 d={d}
                 className={cls}
                 tabIndex={-1}

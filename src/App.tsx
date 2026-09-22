@@ -1,4 +1,5 @@
 import { lazy, Suspense } from 'react';
+import { ReactionsProvider } from './reactions/ReactionsProvider';
 import { HashRouter, Route, Routes } from 'react-router-dom';
 import { SettingsProvider } from './context/SettingsContext';
 import { Navigation } from './components/Navigation/Navigation';
@@ -30,6 +31,7 @@ function PageLoading() {
 export default function App() {
   return (
     <SettingsProvider>
+      <ReactionsProvider>
       <HashRouter>
         <div className="app-shell">
           <Navigation />
@@ -53,6 +55,7 @@ export default function App() {
           </main>
         </div>
       </HashRouter>
+      </ReactionsProvider>
     </SettingsProvider>
   );
 }

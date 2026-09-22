@@ -1,10 +1,13 @@
 import { useId, type CSSProperties } from 'react';
 import type { Country } from '../../types/country';
 import { getFlagUrl } from '../Flag/flagAssets';
+import { useBallReaction } from '../../reactions/useBallReaction';
+import type { BallMood } from '../../reactions/events';
+export type { BallMood } from '../../reactions/events';
 import './CountryBall.css';
 
 /** Διάθεση/κίνηση του χαρακτήρα */
-export type BallMood = 'idle' | 'happy' | 'dance' | 'sad';
+
 
 interface CountryBallProps {
   country: Country;
@@ -15,6 +18,7 @@ interface CountryBallProps {
   animationDelay?: string;
   /** idle: ήρεμο αιώρημα · happy: χαρούμενα άλματα · dance: χορός · sad: στενοχώρια */
   mood?: BallMood;
+  reactive?: boolean;
 }
 
 /** Ντετερμινιστική «τυχαιότητα» από το iso2 — ίδια χώρα, ίδιος χαρακτήρας */
@@ -123,8 +127,11 @@ export function CountryBall({
   size = 140,
   className = '',
   animationDelay,
-  mood = 'idle',
+  mood: explicitMood,
+  reactive = true,
 }: CountryBallProps) {
+  const reaction = useBallReaction(country.iso2, reactive && explicitMood === undefined);
+  const mood = explicitMood ?? reaction.mood;
   const uid = useId().replace(/[^a-zA-Z0-9]/g, '');
   const flagUrl = getFlagUrl(country.iso2);
   const clipId = `cb-clip-${uid}`;

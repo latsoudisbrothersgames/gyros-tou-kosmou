@@ -7,6 +7,7 @@ import {
   scoreWrongAnswer,
   type ScoreBreakdown,
 } from '../game/scoring';
+import { useReactions } from '../reactions/ReactionsProvider';
 import { addToCollection } from '../utils/collection';
 
 export interface GameSession {
@@ -45,6 +46,7 @@ function initialState(config: GameConfig): SessionState {
  * (κουίζ πολλαπλής επιλογής και χάρτης).
  */
 export function useGameSession(config: GameConfig, restrictToIso2?: Set<string>): GameSession {
+  const reactions = useReactions();
   const streamRef = useRef<QuestionStream | null>(null);
   if (streamRef.current === null) {
     streamRef.current = new QuestionStream(config, restrictToIso2);
@@ -97,9 +99,12 @@ export function useGameSession(config: GameConfig, restrictToIso2?: Set<string>)
           ],
         };
       });
+      reactions?.emit(correct
+        ? { type: 'answer:correct', iso2: question.countryId, streak: state.streak + 1 }
+        : { type: 'answer:wrong', chosen: answerId, correct: question.countryId });
       return correct;
     },
-    [question, selectedAnswerId, state.streak, hintUsed],
+    [question, selectedAnswerId, state.streak, hintUsed, reactions],
   );
 
   const useHintCb = useCallback(() => {

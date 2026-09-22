@@ -1,3 +1,5 @@
+import { useEffect } from 'react';
+import { useReactions } from '../reactions/ReactionsProvider';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { ALL_COUNTRIES, getCountryByIsoCode } from '../data/countries';
 import {
@@ -86,6 +88,11 @@ export function CountryPage() {
   const navigate = useNavigate();
   const country = iso2 ? getCountryByIsoCode(iso2) : undefined;
 
+  const reactions = useReactions();
+  useEffect(() => {
+    if (country) reactions?.emit({ type: 'country:open', iso2: country.iso2 });
+  }, [country, reactions]);
+
   if (!country) {
     return (
       <div className="country-page__missing card">
@@ -149,7 +156,6 @@ export function CountryPage() {
                 <CountryBall
                   country={country}
                   size={150}
-                  mood={justDiscovered ? 'dance' : 'idle'}
                 />
               </div>
             </div>

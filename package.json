@@ -8,7 +8,8 @@
     "build": "tsc -b && vite build",
     "lint": "oxlint",
     "preview": "vite preview",
-    "probe:offline": "node tools/offline_probe.mjs"
+    "probe:offline": "node tools/offline_probe.mjs",
+    "test:reactions": "node scripts/reactionsTest.ts"
   },
   "dependencies": {
     "@types/d3-transition": "^3.0.9",
