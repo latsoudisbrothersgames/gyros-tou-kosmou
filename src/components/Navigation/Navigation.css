@@ -113,3 +113,5 @@
     font-size: 1.3rem;
   }
 }
+
+.nav__update { display: block; width: 100%; padding: 0.5rem; border: 0; background: #fff1c2; color: #0d2f4f; cursor: pointer; font: inherit; }

@@ -3,6 +3,7 @@ import { getCountryByIsoCode } from '../data/countries';
 import { CountryBall } from '../components/CountryBall/CountryBall';
 import { Flag } from '../components/Flag/Flag';
 import { Button } from '../components/Button/Button';
+import { usePwaStatus } from '../pwa/status';
 import './HomePage.css';
 
 const MODE_CARDS = [
@@ -76,6 +77,7 @@ const HERO_FLAGS = ['fr', 'it', 'us', 'au', 'in', 'za', 'mx', 'se'] as const;
 
 export function HomePage() {
   const navigate = useNavigate();
+  const { offlineReady } = usePwaStatus();
 
   return (
     <div className="home">
@@ -88,6 +90,7 @@ export function HomePage() {
           ))}
         </div>
         <h1 className="home__title">Γύρος του Κόσμου</h1>
+        {offlineReady && <p className="home__offline" role="status">Λειτουργεί χωρίς σύνδεση ✓</p>}
         <p className="home__subtitle">Σημαίες • Χώρες • Πρωτεύουσες • Γεωγραφία</p>
         <div className="home__cta">
           <Button variant="sun" size="lg" onClick={() => navigate('/games')}>
