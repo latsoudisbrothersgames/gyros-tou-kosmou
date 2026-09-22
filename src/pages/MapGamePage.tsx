@@ -60,7 +60,10 @@ function MapGameSession({
   const { state, question, selectedAnswerId } = session;
   const reactions = useReactions();
   const nearRef = useRef<boolean | null>(null);
-  useEffect(() => { nearRef.current = null; }, [question.id]);
+  useEffect(() => {
+    nearRef.current = null;
+    reactions?.emit({ type: 'question:new', iso2s: [question.countryId] });
+  }, [question.id, question.countryId, reactions]);
   const mapRef = useRef<WorldMapHandle>(null);
   const autoAdvanceRef = useRef<number | null>(null);
 

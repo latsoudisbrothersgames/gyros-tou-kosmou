@@ -1,13 +1,14 @@
 import { useEffect } from 'react';
 import type { Question } from '../types/game';
 import { TIME_BONUS_WINDOW_MS } from '../game/scoring';
+import { countryForChoice } from './choiceCountry';
 import { useReactions } from './ReactionsProvider';
 
 export function useQuizReactions(question: Question, answered: boolean, finished: boolean) {
   const bus = useReactions();
   useEffect(() => {
     if (!bus || finished) return;
-    bus.emit({ type: 'question:new', iso2s: question.choices.map((choice) => choice.id) });
+    bus.emit({ type: 'question:new', iso2s: question.choices.map((choice) => countryForChoice(question, choice)?.iso2).filter((iso2): iso2 is string => Boolean(iso2)) });
   }, [bus, question, finished]);
 
   useEffect(() => {
@@ -17,7 +18,7 @@ export function useQuizReactions(question: Question, answered: boolean, finished
     let idleTimer: ReturnType<typeof setTimeout>;
     const wake = () => {
       clearTimeout(idleTimer);
-      if (sleeping) bus.emit({ type: 'question:new', iso2s: question.choices.map((choice) => choice.id) });
+      if (sleeping) bus.emit({ type: 'question:new', iso2s: question.choices.map((choice) => countryForChoice(question, choice)?.iso2).filter((iso2): iso2 is string => Boolean(iso2)) });
       sleeping = false;
       idleTimer = setTimeout(() => { sleeping = true; bus.emit({ type: 'idle', seconds: 10 }); }, 10000);
     };

@@ -19,7 +19,9 @@ if ('serviceWorker' in navigator) {
     immediate: true,
     // Με autoUpdate ο νέος SW ενεργοποιείται αυτόματα. Η σελίδα ανανεώνεται
     // με επιλογή του παίκτη, ώστε να μη χάνεται το παιχνίδι του.
-    onOfflineReady: () => publish({ offlineReady: true }),
+    onOfflineReady: () => {
+      void navigator.serviceWorker.ready.then(() => publish({ offlineReady: true }));
+    },
     onNeedReload: () => publish({ updateReady: true }),
     onNeedRefresh: () => publish({ updateReady: true }),
     onRegisteredSW: (_url, registration) => {

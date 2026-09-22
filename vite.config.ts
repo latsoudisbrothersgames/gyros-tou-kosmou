@@ -7,6 +7,8 @@ export default defineConfig(({ command }) => {
   const base = command === 'build' ? '/gyros-tou-kosmou/' : '/';
   return {
     base,
+    // Ο τοπικός άτλαντας ~750 KB είναι σκόπιμα ένα πλήρως precached chunk.
+    build: { chunkSizeWarningLimit: 800 },
     plugins: [react(), VitePWA({
       registerType: 'autoUpdate',
       manifest: {

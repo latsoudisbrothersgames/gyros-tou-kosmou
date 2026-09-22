@@ -41,6 +41,8 @@ export function saveScores(scores: ScoreEntry[]): void {
 /** Καθαρισμός ονόματος: αφαίρεση αόρατων/επικίνδυνων χαρακτήρων, όριο μήκους */
 export function sanitizePlayerName(raw: string): string {
   return raw
+    // Οι χαρακτήρες ελέγχου αφαιρούνται σκόπιμα από το όνομα παίκτη.
+    // oxlint-disable-next-line no-control-regex
     .replace(/[<>\u0000-\u001f\u007f]/g, '')
     .replace(/\s+/g, ' ')
     .trim()

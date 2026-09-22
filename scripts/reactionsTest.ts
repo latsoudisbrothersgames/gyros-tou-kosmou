@@ -80,3 +80,25 @@ setHapticsEnabled(true);
 Object.defineProperty(globalThis.navigator, 'vibrate', { configurable: true, value: undefined });
 assert.doesNotThrow(() => vibrate(35));
 console.log('PASS 78 ατάκες, επιλογέας, άρθρα, στοιχεία εγκυκλοπαίδειας και δονήσεις');
+
+const { countryForChoice } = await import('../src/reactions/choiceCountry.ts');
+const capitalQuestion = { type: 'COUNTRY_TO_CAPITAL', countryId: 'gr', correctAnswerId: 'cap-gr' } as import('../src/types/game.ts').Question;
+assert.equal(countryForChoice(capitalQuestion, { id: 'cap-gr', label: 'Αθήνα' })?.iso2, 'gr');
+assert.equal(countryForChoice(capitalQuestion, { id: 'cap-x0', label: 'Ρώμη' })?.iso2, 'it');
+console.log('PASS αντιστοίχιση πρωτευουσών σε ISO χωρίς αλλαγή της μηχανής');
+
+const { createBus } = await import('../src/reactions/bus.ts');
+const bus = createBus();
+let calls = 0;
+const unsubscribe = bus.subscribe('*', () => calls++);
+bus.emit({ type: 'answer:correct', iso2: 'gr', streak: 1 });
+assert.equal(calls, 1);
+let replay: ReactionEvent | undefined;
+const stop = bus.subscribe('gr', (event) => { replay = event; });
+assert.equal(replay?.type, 'answer:correct');
+stop(); unsubscribe(); bus.clear();
+bus.subscribe('jp', () => calls++);
+assert.equal(calls, 1);
+bus.emit({ type: 'idle', seconds: 10 });
+assert.equal(calls, 2);
+console.log('PASS event bus, replay, αποσύνδεση και καθαρισμός στην αλλαγή σελίδας');

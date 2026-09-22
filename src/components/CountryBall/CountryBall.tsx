@@ -155,7 +155,7 @@ export function CountryBall({
   const ballStyle = {
     width: size,
     height: size * 1.08,
-    animationDelay: delay,
+    animationDelay: mood === 'idle' ? delay : animationDelay ?? '0s',
     '--cb-float-dur': `${ch.floatDur.toFixed(2)}s`,
     '--cb-tilt-dur': `${ch.tiltDur.toFixed(2)}s`,
     '--cb-tilt-deg': `${ch.tiltDeg.toFixed(2)}deg`,

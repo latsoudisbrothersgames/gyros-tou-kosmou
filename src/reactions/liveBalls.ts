@@ -42,7 +42,8 @@ export function createLiveBalls() {
         const box = element.getBoundingClientRect();
         const dx = x - box.x - box.width / 2;
         const dy = y - box.y - box.height / 2;
-        const scale = 3 / Math.max(60, Math.hypot(dx, dy));
+        // Το SVG έχει πλάτος 100 μονάδων· κρατάμε το όριο και σε μεγάλες μπάλες.
+        const scale = 3 / Math.max(60, Math.hypot(dx, dy)) * Math.min(1, 100 / box.width);
         return { element, dx: dx * scale, dy: dy * scale };
       });
       for (const { element, dx, dy } of positions) {

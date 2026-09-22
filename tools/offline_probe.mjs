@@ -12,6 +12,7 @@ await withPreview(async ({ context, page }) => {
     if (/^https?:/.test(request.url()) && !request.url().startsWith(base)) external.push(request.url());
   });
   await page.goto(base);
+  await page.waitForFunction(async () => (await navigator.serviceWorker.getRegistration())?.active?.state === 'activated');
   await page.evaluate(() => navigator.serviceWorker.ready.then(() => true));
   const assets = readdirSync('dist/assets', { recursive: true }).filter((name) => /\.[^/]+$/.test(name));
   await page.waitForFunction(async (expected) => {
@@ -35,9 +36,9 @@ await withPreview(async ({ context, page }) => {
       await page.locator(selector).first().waitFor();
       await loadedFlag(page);
       if (route === '/play/country') {
-        const before = await page.locator('.question-card').innerText();
+        const before = await page.locator('.question-card').getAttribute('data-question-id');
         await page.locator('.choice').first().click();
-        await page.waitForFunction((previous) => document.querySelector('.question-card')?.textContent && document.querySelectorAll('.choice:disabled').length === 0 && document.querySelector('.question-card').innerText !== previous, before);
+        await page.waitForFunction((previous) => document.querySelector('.question-card')?.dataset.questionId !== previous && document.querySelectorAll('.choice:not(:disabled)').length === 4, before);
       }
       if (route === '/map') await page.locator('.worldmap__country').first().waitFor();
       assert.deepEqual(errors, []);

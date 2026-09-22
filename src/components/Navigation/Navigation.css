@@ -123,3 +123,9 @@
 .nav__settings-panel label { display: flex; gap: 10px; align-items: center; min-height: 44px; cursor: pointer; }
 .nav__settings-panel input { width: 20px; height: 20px; accent-color: #ffd45c; }
 .nav__settings-panel .nav__sound { width: 100%; color: white; font-size: 1rem; }
+@media (max-width: 560px) {
+  .nav__brand-globe .flag { width: 30px; }
+  .nav__links { min-width: 0; overflow-x: auto; scrollbar-width: none; }
+  .nav__links li { flex-shrink: 0; }
+  .nav__link { padding-inline: 0.55em; }
+}

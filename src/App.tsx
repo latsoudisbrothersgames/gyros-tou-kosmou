@@ -1,6 +1,6 @@
-import { lazy, Suspense } from 'react';
-import { ReactionsProvider } from './reactions/ReactionsProvider';
-import { HashRouter, Route, Routes } from 'react-router-dom';
+import { lazy, Suspense, useLayoutEffect } from 'react';
+import { ReactionsProvider, useReactions } from './reactions/ReactionsProvider';
+import { HashRouter, Route, Routes, useLocation } from 'react-router-dom';
 import { SettingsProvider } from './context/SettingsContext';
 import { Navigation } from './components/Navigation/Navigation';
 import { HomePage } from './pages/HomePage';
@@ -20,6 +20,14 @@ const MapGamePage = lazy(() =>
   import('./pages/MapGamePage').then((m) => ({ default: m.MapGamePage })),
 );
 
+/** Η επανάληψη γεγονότων αφορά μόνο την τρέχουσα οθόνη. */
+function ReactionsRouteReset() {
+  const reactions = useReactions();
+  const location = useLocation();
+  useLayoutEffect(() => { reactions?.clear(); }, [reactions, location.key]);
+  return null;
+}
+
 function PageLoading() {
   return (
     <div role="status" style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-600)' }}>
@@ -32,29 +40,30 @@ export default function App() {
   return (
     <SettingsProvider>
       <ReactionsProvider>
-      <HashRouter>
-        <div className="app-shell">
-          <Navigation />
-          <main className="app-main">
-            <Suspense fallback={<PageLoading />}>
-              <Routes>
-                <Route path="/" element={<HomePage />} />
-                <Route path="/games" element={<GamesPage />} />
-                <Route path="/games/:mode" element={<GamesPage />} />
-                <Route path="/play/map" element={<MapGamePage />} />
-                <Route path="/play/scratch" element={<ScratchGamePage />} />
-                <Route path="/play/:mode" element={<QuizGamePage />} />
-                <Route path="/map" element={<WorldMapPage />} />
-                <Route path="/encyclopedia" element={<EncyclopediaPage />} />
-                <Route path="/country/:iso2" element={<CountryPage />} />
-                <Route path="/scoreboard" element={<ScoreboardPage />} />
-                <Route path="/collection" element={<CollectionPage />} />
-                <Route path="*" element={<HomePage />} />
-              </Routes>
-            </Suspense>
-          </main>
-        </div>
-      </HashRouter>
+        <HashRouter>
+          <ReactionsRouteReset />
+          <div className="app-shell">
+            <Navigation />
+            <main className="app-main">
+              <Suspense fallback={<PageLoading />}>
+                <Routes>
+                  <Route path="/" element={<HomePage />} />
+                  <Route path="/games" element={<GamesPage />} />
+                  <Route path="/games/:mode" element={<GamesPage />} />
+                  <Route path="/play/map" element={<MapGamePage />} />
+                  <Route path="/play/scratch" element={<ScratchGamePage />} />
+                  <Route path="/play/:mode" element={<QuizGamePage />} />
+                  <Route path="/map" element={<WorldMapPage />} />
+                  <Route path="/encyclopedia" element={<EncyclopediaPage />} />
+                  <Route path="/country/:iso2" element={<CountryPage />} />
+                  <Route path="/scoreboard" element={<ScoreboardPage />} />
+                  <Route path="/collection" element={<CollectionPage />} />
+                  <Route path="*" element={<HomePage />} />
+                </Routes>
+              </Suspense>
+            </main>
+          </div>
+        </HashRouter>
       </ReactionsProvider>
     </SettingsProvider>
   );
