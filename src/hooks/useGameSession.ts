@@ -7,6 +7,9 @@ import {
   scoreWrongAnswer,
   type ScoreBreakdown,
 } from '../game/scoring';
+import { countryForChoice } from '../reactions/choiceCountry';
+import { vibrate } from '../utils/haptics';
+import { useReactions } from '../reactions/ReactionsProvider';
 import { addToCollection } from '../utils/collection';
 
 export interface GameSession {
@@ -45,6 +48,7 @@ function initialState(config: GameConfig): SessionState {
  * (κουίζ πολλαπλής επιλογής και χάρτης).
  */
 export function useGameSession(config: GameConfig, restrictToIso2?: Set<string>): GameSession {
+  const reactions = useReactions();
   const streamRef = useRef<QuestionStream | null>(null);
   if (streamRef.current === null) {
     streamRef.current = new QuestionStream(config, restrictToIso2);
@@ -97,9 +101,15 @@ export function useGameSession(config: GameConfig, restrictToIso2?: Set<string>)
           ],
         };
       });
+      const chosenChoice = question.choices.find((choice) => choice.id === answerId);
+      const chosenIso2 = chosenChoice ? countryForChoice(question, chosenChoice)?.iso2 ?? answerId : answerId;
+      vibrate(correct ? 35 : [25, 60, 25]);
+      reactions?.emit(correct
+        ? { type: 'answer:correct', iso2: question.countryId, streak: state.streak + 1 }
+        : { type: 'answer:wrong', chosen: chosenIso2, correct: question.countryId });
       return correct;
     },
-    [question, selectedAnswerId, state.streak, hintUsed],
+    [question, selectedAnswerId, state.streak, hintUsed, reactions],
   );
 
   const useHintCb = useCallback(() => {

@@ -41,6 +41,8 @@ export function saveScores(scores: ScoreEntry[]): void {
 /** Καθαρισμός ονόματος: αφαίρεση αόρατων/επικίνδυνων χαρακτήρων, όριο μήκους */
 export function sanitizePlayerName(raw: string): string {
   return raw
+    // Οι χαρακτήρες ελέγχου αφαιρούνται σκόπιμα από το όνομα παίκτη.
+    // oxlint-disable-next-line no-control-regex
     .replace(/[<>\u0000-\u001f\u007f]/g, '')
     .replace(/\s+/g, ' ')
     .trim()
@@ -63,8 +65,12 @@ export function clearScores(): void {
 }
 
 export function loadSettings(): Settings {
-  const stored = readStorage<Settings>(SETTINGS_KEY, DEFAULT_SETTINGS, isSettings);
-  return { ...DEFAULT_SETTINGS, ...stored };
+  const stored = readStorage<Settings>(SETTINGS_KEY, { ...DEFAULT_SETTINGS, reducedMotion: typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches }, isSettings);
+  return { ...DEFAULT_SETTINGS, ...stored,
+    hapticsEnabled: typeof stored.hapticsEnabled === 'boolean' ? stored.hapticsEnabled : true,
+    reducedMotion: typeof stored.reducedMotion === 'boolean' ? stored.reducedMotion
+      : typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches,
+  };
 }
 
 export function saveSettings(settings: Settings): void {

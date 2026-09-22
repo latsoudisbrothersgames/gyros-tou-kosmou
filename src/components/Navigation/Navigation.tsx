@@ -1,6 +1,8 @@
 import { NavLink } from 'react-router-dom';
 import { useSettings } from '../../context/SettingsContext';
 import { playSound } from '../../audio/soundManager';
+import { usePwaStatus } from '../../pwa/status';
+import { Flag } from '../Flag/Flag';
 import './Navigation.css';
 
 const LINKS = [
@@ -14,12 +16,18 @@ const LINKS = [
 
 export function Navigation() {
   const { settings, updateSettings } = useSettings();
+  const { updateReady } = usePwaStatus();
 
   return (
     <header className="nav">
+      {updateReady && (
+        <button className="nav__update" type="button" onClick={() => window.location.reload()}>
+          Νέα έκδοση, πάτα για ανανέωση
+        </button>
+      )}
       <nav className="nav__inner" aria-label="Κύρια πλοήγηση">
         <NavLink to="/" className="nav__brand" aria-label="Γύρος του Κόσμου — Αρχική">
-          <span className="nav__brand-globe" aria-hidden="true">🌍</span>
+          <span className="nav__brand-globe" aria-hidden="true"><Flag iso2="gr" size="sm" /></span>
           <span className="nav__brand-text">Γύρος του Κόσμου</span>
         </NavLink>
         <ul className="nav__links">
@@ -38,6 +46,9 @@ export function Navigation() {
             </li>
           ))}
         </ul>
+        <details className="nav__settings">
+          <summary aria-label="Ρυθμίσεις παιχνιδιού" title="Ρυθμίσεις">⚙️</summary>
+          <div className="nav__settings-panel">
         <button
           type="button"
           className="nav__sound"
@@ -53,8 +64,14 @@ export function Navigation() {
             }
           }}
         >
-          {settings.soundEnabled ? '🔊' : '🔇'}
+          {settings.soundEnabled ? '🔊 Ήχος: Ναι' : '🔇 Ήχος: Όχι'}
         </button>
+            <label><input type="checkbox" checked={settings.hapticsEnabled}
+              onChange={(event) => updateSettings({ hapticsEnabled: event.target.checked })} /> Δονήσεις</label>
+            <label><input type="checkbox" checked={settings.reducedMotion}
+              onChange={(event) => updateSettings({ reducedMotion: event.target.checked })} /> Λιγότερη κίνηση</label>
+          </div>
+        </details>
       </nav>
     </header>
   );

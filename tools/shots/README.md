@@ -1,0 +1,1 @@
+Τα `balls-quiz-correct.png`, `balls-quiz-wrong.png`, `balls-country.png` και `balls-results.png` παράγονται από το `npm run probe:balls`. Δεν υπάρχουν ακόμη: στο τρέχον sandbox ο Chrome τερματίζεται με SIGABRT πριν ανοίξει σελίδα. Δεν χρησιμοποιήθηκαν προσομοιωμένα screenshots.

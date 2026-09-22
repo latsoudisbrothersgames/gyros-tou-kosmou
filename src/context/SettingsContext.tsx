@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 import type { Settings } from '../types/game';
 import { loadSettings, saveSettings } from '../utils/storage';
+import { setHapticsEnabled } from '../utils/haptics';
 import { setSoundEnabled } from '../audio/soundManager';
 
 interface SettingsContextValue {
@@ -16,6 +17,10 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     setSoundEnabled(settings.soundEnabled);
   }, [settings.soundEnabled]);
+
+  useEffect(() => {
+    setHapticsEnabled(settings.hapticsEnabled);
+  }, [settings.hapticsEnabled]);
 
   const updateSettings = (patch: Partial<Settings>) => {
     setSettings((prev) => {

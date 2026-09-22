@@ -11,6 +11,7 @@ import { Button } from '../Button/Button';
 import { CountryBall } from '../CountryBall/CountryBall';
 import { ExplorerPassport } from '../Passport/ExplorerPassport';
 import { SessionRouteMap } from '../Passport/SessionRouteMap';
+import { useReactions } from '../../reactions/ReactionsProvider';
 import './GameResults.css';
 
 /** Ορόσημα συλλογής που γιορτάζονται με χρυσή σφραγίδα */
@@ -24,6 +25,13 @@ interface GameResultsProps {
 /** Οθόνη αποτελεσμάτων με καταχώριση ονόματος στον πίνακα βαθμολογίας. */
 export function GameResults({ state, onPlayAgain }: GameResultsProps) {
   const navigate = useNavigate();
+  const reactions = useReactions();
+  useEffect(() => {
+    reactions?.emit({ type: 'game:end',
+      won: [...new Set(state.answers.filter((a) => a.correct).map((a) => a.countryId))],
+      lost: [...new Set(state.answers.filter((a) => !a.correct).map((a) => a.countryId))],
+    });
+  }, [reactions, state.answers]);
   const { settings, updateSettings } = useSettings();
   const [name, setName] = useState(settings.lastPlayerName);
   const [saved, setSaved] = useState(false);
@@ -96,6 +104,12 @@ export function GameResults({ state, onPlayAgain }: GameResultsProps) {
         />
       </div>
 
+      <div className="game-results__parade" aria-label="Οι χώρες του ταξιδιού">
+        {[...new Set(state.answers.map((a) => a.countryId))].map((iso2) => {
+          const country = getCountryByIsoCode(iso2);
+          return country ? <CountryBall key={iso2} country={country} size={64} /> : null;
+        })}
+      </div>
       <SessionRouteMap stops={state.answers} />
 
       {discoveredCountries.length > 0 && (

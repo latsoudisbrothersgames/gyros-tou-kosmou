@@ -107,3 +107,5 @@
 .collection__grid .countryball__ground {
   animation: none;
 }
+
+.collection__tap { border: 0; background: transparent; cursor: pointer; padding: 0; }

@@ -5,6 +5,7 @@ import { CONTINENT_LABELS, type ContinentId } from '../types/country';
 import { continentVars } from '../theme/continents';
 import { loadCollection } from '../utils/collection';
 import { CountryBall } from '../components/CountryBall/CountryBall';
+import { useReactions } from '../reactions/ReactionsProvider';
 import './CollectionPage.css';
 
 type Filter = 'all' | ContinentId;
@@ -15,6 +16,7 @@ type Filter = 'all' | ContinentId;
  * εμφανίζονται ως σκιές με «;».
  */
 export function CollectionPage() {
+  const reactions = useReactions();
   const collection = useMemo(() => loadCollection(), []);
   const [filter, setFilter] = useState<Filter>('all');
 
@@ -75,15 +77,17 @@ export function CollectionPage() {
         {countries.map((c) => {
           const owned = collection.has(c.iso2);
           return owned ? (
-            <Link
+            <div
               key={c.iso2}
-              to={`/country/${c.iso2}`}
               className="collection__item collection__item--owned"
               style={continentVars(c.continent)}
             >
-              <CountryBall country={c} size={84} />
-              <span className="collection__name">{c.nameGreek}</span>
-            </Link>
+              <button type="button" className="collection__tap" aria-label={`Παίξε με τη φιγούρα: ${c.nameGreek}`}
+                onClick={() => reactions?.emit({ type: 'collection:tap', iso2: c.iso2 })}>
+                <CountryBall country={c} size={84} />
+              </button>
+              <Link to={`/country/${c.iso2}`} className="collection__name">{c.nameGreek}</Link>
+            </div>
           ) : (
             <div key={c.iso2} className="collection__item collection__item--locked" aria-label="Κλειδωμένη φιγούρα">
               <span className="collection__mystery" aria-hidden="true">?</span>

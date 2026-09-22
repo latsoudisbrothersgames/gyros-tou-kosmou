@@ -2,6 +2,8 @@ import type { Question } from '../../types/game';
 import { getCountryByIsoCode } from '../../data/countries';
 import { LANDMARK_BY_ID } from '../../data/landmarks';
 import { continentVars } from '../../theme/continents';
+import { countryForChoice } from '../../reactions/choiceCountry';
+import { CountryBall } from '../CountryBall/CountryBall';
 import { Flag } from '../Flag/Flag';
 import { LandmarkArt } from '../LandmarkArt/LandmarkArt';
 import './QuestionCard.css';
@@ -35,7 +37,7 @@ export function QuestionCard({
       : undefined;
 
   return (
-    <section className="question-card card" aria-label="Ερώτηση">
+    <section data-question-id={question.id} className="question-card card" aria-label="Ερώτηση">
       <div className="question-card__prompt-area">
         {showPromptFlag && country && (
           <Flag
@@ -72,6 +74,8 @@ export function QuestionCard({
         aria-label="Επιλογές απάντησης"
       >
         {question.choices.map((choice, index) => {
+          const choiceCountry = countryForChoice(question, choice);
+          const showBall = question.type !== 'COUNTRY_TO_CAPITAL' || answered;
           const isCorrect = choice.id === question.correctAnswerId;
           const isSelected = choice.id === selectedAnswerId;
           const isEliminated = !answered && eliminatedIds.includes(choice.id);
@@ -83,6 +87,7 @@ export function QuestionCard({
 
           return (
             <button
+              data-choice-id={choice.id}
               key={choice.id}
               type="button"
               className={`choice ${flagChoices ? 'choice--flag' : ''} ${stateClass}`}
@@ -94,6 +99,9 @@ export function QuestionCard({
                   : `Επιλογή ${index + 1}: ${choice.label}`
               }
             >
+              {showBall && choiceCountry && (
+                <CountryBall country={choiceCountry} size={42} />
+              )}
               <span className="choice__key" aria-hidden="true">{index + 1}</span>
               {flagChoices && choice.flagIso2 ? (
                 <Flag iso2={choice.flagIso2} size="lg" className="choice__flag-img" />

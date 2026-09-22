@@ -140,3 +140,10 @@
 .choice--muted {
   opacity: 0.55;
 }
+
+.choice .countryball { flex-shrink: 0; }
+@media (max-width: 640px) {
+  .choice { gap: 8px; flex-wrap: wrap; }
+  .choice__label { min-width: 100px; overflow-wrap: anywhere; }
+  .choice__result { margin-left: auto; font-size: 0.85rem; }
+}

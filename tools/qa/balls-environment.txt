@@ -1,0 +1,8 @@
+Η εκτέλεση έφτασε σε επιτυχές build και απέτυχε πριν δημιουργηθεί σελίδα Chrome.
+browserType.launch: Target page, context or browser has been closed
+<launched> pid=95301
+[2m  - <launched> pid=95301[22m
+[2m  - [pid=95301] <process did exit: exitCode=null, signal=SIGABRT>[22m
+    at withPreview (/private/tmp/gyros-sprint1/tools/probe_helpers.mjs:20:30)
+    '  - <launched> pid=95301',
+    '  - [pid=95301] <process did exit: exitCode=null, signal=SIGABRT>',

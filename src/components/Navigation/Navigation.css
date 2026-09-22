@@ -113,3 +113,19 @@
     font-size: 1.3rem;
   }
 }
+
+.nav__update { display: block; width: 100%; padding: 0.5rem; border: 0; background: #fff1c2; color: #0d2f4f; cursor: pointer; font: inherit; }
+
+.nav__settings { position: relative; flex-shrink: 0; }
+.nav__settings summary { cursor: pointer; list-style: none; display: grid; place-items: center; width: 44px; height: 44px; border-radius: 50%; background: rgba(255,255,255,0.12); }
+.nav__settings summary::-webkit-details-marker { display: none; }
+.nav__settings-panel { position: absolute; right: 0; top: calc(100% + 8px); display: grid; gap: 6px; width: 235px; padding: 12px; border-radius: 16px; background: #0d2f4f; color: white; box-shadow: var(--shadow-md); }
+.nav__settings-panel label { display: flex; gap: 10px; align-items: center; min-height: 44px; cursor: pointer; }
+.nav__settings-panel input { width: 20px; height: 20px; accent-color: #ffd45c; }
+.nav__settings-panel .nav__sound { width: 100%; color: white; font-size: 1rem; }
+@media (max-width: 560px) {
+  .nav__brand-globe .flag { width: 30px; }
+  .nav__links { min-width: 0; overflow-x: auto; scrollbar-width: none; }
+  .nav__links li { flex-shrink: 0; }
+  .nav__link { padding-inline: 0.55em; }
+}
