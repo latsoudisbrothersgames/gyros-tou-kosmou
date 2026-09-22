@@ -13,8 +13,11 @@ const initialState = (config: GameConfig): SessionState => ({ config, questionIn
 /** Κοινός κύκλος ζωής μόνο για τα νέα παιχνίδια. Κλείδωμα πριν από κάθε παρενέργεια. */
 export function useNewModeSession(config: GameConfig) {
   const reactions = useReactions();
-  const [stream, setStream] = useState(() => new NewModeStream(config));
-  const [round, setRound] = useState(() => stream.next());
+  // Κάθε δοκιμαστική αρχικοποίηση του StrictMode παίρνει δική της ροή.
+  const [{ stream, round }, setFlow] = useState(() => {
+    const stream = new NewModeStream(config);
+    return { stream, round: stream.next() };
+  });
   const [state, setState] = useState(() => initialState(config));
   const [selected, setSelected] = useState<string | null>(null);
   const locked = useRef(false);
@@ -45,11 +48,11 @@ export function useNewModeSession(config: GameConfig) {
     locked.current = false;
     const finished = total !== null && state.questionIndex + 1 >= total;
     setState(prev => ({ ...prev, questionIndex: prev.questionIndex + 1, finished }));
-    if (!finished) { setRound(stream.next()); setSelected(null); started.current = performance.now(); }
+    if (!finished) { setFlow({ stream, round: stream.next() }); setSelected(null); started.current = performance.now(); }
   }, [state.questionIndex, state.finished, stream, total]);
   const restart = () => {
     const fresh = new NewModeStream(config);
-    setStream(fresh); setRound(fresh.next()); setState(initialState(config));
+    setFlow({ stream: fresh, round: fresh.next() }); setState(initialState(config));
     setSelected(null); locked.current = false; started.current = performance.now();
   };
   const finish = () => { locked.current = true; setState(prev => ({ ...prev, finished: true })); };

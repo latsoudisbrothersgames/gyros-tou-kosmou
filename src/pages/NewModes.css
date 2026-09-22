@@ -18,7 +18,6 @@
 .new-mode__reveal .countryball__flag { animation: mystery-reveal .6s ease-out both; }
 @keyframes mystery-reveal { from { opacity: 0; } to { opacity: 1; } }
 @media (prefers-reduced-motion: reduce) { .new-mode__reveal .countryball__flag { animation: none; } }
-html[data-reduced-motion="true"] .new-mode__reveal .countryball__flag { animation: none; }
 
 /* Ίδια ταχύτητα και απόσταση ανά λωρίδα: ποτέ επικάλυψη στόχων. */
 .parade__track { position: relative; container-type: inline-size; overflow: hidden; height: 250px; border-radius: 20px; background: linear-gradient(#e4f5ff 49%, #c2e5f2 50%, #e4f5ff 51%); }
@@ -33,9 +32,9 @@ html[data-reduced-motion="true"] .new-mode__reveal .countryball__flag { animatio
 .parade__clock svg { width: 100%; height: 100%; transform: rotate(-90deg); }
 .parade__clock circle { fill: none; stroke-width: 4; }
 .parade__clock-track { stroke: #c2e5f2; }
-.parade__clock-hand { stroke: #197c9d; stroke-dasharray: 100.53; animation: parade-clock linear both; }
+.parade__clock-hand { stroke: #197c9d; stroke-dasharray: 100.53; animation: parade-clock steps(20) both; animation-duration: var(--clock-duration) !important; }
 @keyframes parade-clock { to { stroke-dashoffset: 100.53; } }
-.parade__miss { position: relative; width: 64px; margin: 62px auto 0; }
+.parade__result { position: relative; width: 64px; margin: 62px auto 0; }
 .countryball[data-motion="reduced"] .countryball__flag { animation: none; }
 
 .bigger__choices { margin-top: 24px; }

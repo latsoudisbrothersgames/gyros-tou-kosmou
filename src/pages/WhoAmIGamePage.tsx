@@ -43,7 +43,7 @@ function MysteryRound({ session: s }: { session: ReturnType<typeof useNewModeSes
       {s.round.choices.map(country => <button type="button" key={country.iso2} data-choice={country.iso2}
         disabled={answered} className={`new-mode__choice ${answered && country.iso2 === s.round.country.iso2 ? 'new-mode__choice--correct' : answered && country.iso2 === s.selected ? 'new-mode__choice--wrong' : ''}`}
         onClick={() => s.answer(country.iso2, streak => scoreWithHints(hints, streak))}>
-        {answered && <CountryBall country={country} size={40} />}
+        {answered && <CountryBall country={country} size={40} speechEnabled={false} />}
         <span>{country.nameGreek}</span>
       </button>)}
     </div>

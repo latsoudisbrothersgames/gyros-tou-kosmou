@@ -24,6 +24,8 @@ interface CountryBallProps {
   reactive?: boolean;
   /** Η κρυμμένη σημαία απουσιάζει εντελώς από το DOM. */
   concealed?: boolean;
+  /** Επιτρέπει μία κοινή, ακέραιη φούσκα έξω από λωρίδες που κόβονται στα άκρα. */
+  speechEnabled?: boolean;
 }
 
 /** Ντετερμινιστική «τυχαιότητα» από το iso2 — ίδια χώρα, ίδιος χαρακτήρας */
@@ -135,6 +137,7 @@ export function CountryBall({
   mood: explicitMood,
   reactive = true,
   concealed = false,
+  speechEnabled = true,
 }: CountryBallProps) {
   const rootRef = useRef<HTMLDivElement>(null);
   const reactions = useReactions();
@@ -167,7 +170,7 @@ export function CountryBall({
 
   return (
     <div ref={rootRef} data-iso2={concealed ? undefined : country.iso2} data-live={live} className={`countryball ${moodClass} ${!live ? 'countryball--static' : ''} ${className}`} style={ballStyle}>
-      {reaction.speech && (
+      {speechEnabled && reaction.speech && (
         <SpeechBubble key={`${country.iso2}-${reaction.speech.sequence}`} lines={
           reaction.speech.reaction.speech === 'greeting' ? [countryGreeting(country), countryFact(country)]
             : reaction.speech.reaction.speech === 'fact' ? [countryFact(country, reaction.speech.sequence - 1)]

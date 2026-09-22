@@ -29,6 +29,9 @@ await withPreview(async ({ context, page }) => {
     ['κουίζ', '/play/country', '.question-card'], ['χάρτης', '/map', '.worldmap'],
     ['εγκυκλοπαίδεια', '/encyclopedia', '.encyclopedia'], ['Ελλάδα', '/country/gr', '.atlas'],
     ['συλλογή', '/collection', '.collection'],
+    ['ποιος είμαι', '/play/whoami?focus=jp', '.new-mode__round'],
+    ['παρέλαση', '/play/parade?focus=jp', '.new-mode__round'],
+    ['μεγαλύτερη', '/play/bigger?focus=jp', '.new-mode__round'],
   ];
   for (const [name, route, selector] of screens) {
     try {
@@ -41,6 +44,20 @@ await withPreview(async ({ context, page }) => {
         // Η επόμενη ερώτηση έρχεται με το κουμπί «Επόμενη Ερώτηση» (ή Enter), όχι αυτόματα.
         await page.locator('button:has-text("Επόμενη")').first().click();
         await page.waitForFunction((previous) => document.querySelector('.question-card')?.dataset.questionId !== previous && document.querySelectorAll('.choice:not(:disabled)').length === 4, before);
+      }
+      if (route.startsWith('/play/whoami') || route.startsWith('/play/parade') || route.startsWith('/play/bigger')) {
+        const before = await page.locator('.new-mode__round').getAttribute('data-round');
+        if (route.startsWith('/play/parade')) {
+          // Ενεργοποίηση με πληκτρολόγιο: ο έλεγχος εδώ αφορά τη λειτουργία offline.
+          await page.locator('[data-choice="jp"]').focus();
+          await page.keyboard.press('Enter');
+        } else await page.locator('.new-mode__choice').first().click();
+        await page.waitForFunction(() => document.querySelector('.new-mode__round')?.dataset.answered === 'true');
+        assert.ok(await page.locator('.new-mode__round image').count() > 0);
+        if (!route.startsWith('/play/parade')) await page.getByRole('button', { name: /Επόμενη ερώτηση/ }).click();
+        await page.waitForFunction(previous => document.querySelector('.new-mode__round')?.dataset.round !== previous, before);
+        await page.reload();
+        await page.locator('.new-mode__round').waitFor();
       }
       if (route === '/map') await page.locator('.worldmap__country').first().waitFor();
       assert.deepEqual(errors, []);

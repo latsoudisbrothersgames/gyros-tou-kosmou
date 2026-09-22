@@ -52,7 +52,7 @@ function ParadeRound({ session: s }: { session: NewModeSession }) {
     <p>Πάτα τη σωστή σημαία πριν φύγει!</p>
     {reduced && <div className="parade__clock" role="timer" aria-label={`Χρόνος γύρου: ${(deadline / 1000).toFixed(1)} δευτερόλεπτα`}>
       <svg viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="16" className="parade__clock-track" />
-        <circle cx="20" cy="20" r="16" className="parade__clock-hand" style={{ animationDuration: `${deadline}ms`, animationPlayState: answered ? 'paused' : 'running' }} /></svg>
+        <circle cx="20" cy="20" r="16" className="parade__clock-hand" style={{ '--clock-duration': `${deadline}ms`, animationPlayState: answered ? 'paused' : 'running' } as CSSProperties} /></svg>
     </div>}
     <div className={`parade__track ${reduced ? 'parade__track--still' : ''} ${answered ? 'parade__track--paused' : ''}`}
       role="group" aria-label="Σημαίες της παρέλασης">
@@ -62,11 +62,14 @@ function ParadeRound({ session: s }: { session: NewModeSession }) {
         style={{ '--lane': index % 2, '--duration': `${settings.durationMs}ms`, '--delay': `${Math.floor(index / 2) * settings.durationMs * .24}ms` } as CSSProperties}
         onPointerDown={event => { if (event.button === 0) { event.preventDefault(); choose(country.iso2); } }}
         onClick={event => { if (event.detail === 0) choose(country.iso2); }}>
-        <CountryBall country={country} size={64} />
+        <CountryBall country={country} size={64} speechEnabled={false} />
         {answered && <span className="parade__name">{country.nameGreek}</span>}
       </button>)}
     </div>
-    {missed && <div className="parade__miss"><SpeechBubble lines={['Έφυγα!']} />
-      <CountryBall country={s.round.country} size={64} mood="sad" /></div>}
+    {answered && <div className={`parade__result ${missed ? 'parade__miss' : ''}`}>
+      <SpeechBubble lines={[missed ? 'Έφυγα!' : s.selected === s.round.country.iso2 ? 'Ναι! Με βρήκες!' : 'Εδώ είμαι!']} />
+      <CountryBall country={s.round.country} size={64}
+        mood={missed ? 'sad' : s.selected !== s.round.country.iso2 ? 'wave' : s.state.streak >= 3 ? 'dance' : 'celebrate'} />
+    </div>}
   </>;
 }
