@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import { geoNaturalEarth1, geoPath } from 'd3-geo';
 import { mesh } from 'topojson-client';
 import type { FeatureCollection, Geometry } from 'geojson';
+import { BOARD, STAGE_H, TRAY_TOP, trimRemote } from '../game/puzzleGeometry';
 import { parseGameConfig } from './QuizGamePage';
 import { useGeoSession } from '../hooks/useGeoSession';
 import { puzzleForRound } from '../data/puzzles';
@@ -46,25 +47,34 @@ function PuzzleRound({ session: s }: { session: ReturnType<typeof useGeoSession<
     if (!topology) return null;
     const chosen = s.round.countries.map(id => topology.countries.find(c => c.iso2 === id)).filter(c => !!c);
     if (chosen.length !== s.round.countries.length) return null;
-    const collection: FeatureCollection<Geometry> = { type: 'FeatureCollection', features: chosen.map(c => c.feature) };
-    const projection = geoNaturalEarth1().fitExtent([[18, 18], [342, 238]], collection);
+    const trimmed = new Map(chosen.map(c => [c.iso2!, trimRemote(c.feature)]));
+    const collection: FeatureCollection<Geometry> = { type: 'FeatureCollection', features: [...trimmed.values()] };
+    const projection = geoNaturalEarth1().fitExtent([[BOARD.x0, BOARD.y0], [BOARD.x1, BOARD.y1]], collection);
     const path = geoPath(projection);
+    // Γραμμές (περίγραμμα/ακτή/σύνορα) από την πλήρη τοπολογία: ό,τι πέφτει έξω από τον πίνακα κόβεται.
+    const boardPath = geoPath(geoNaturalEarth1().scale(projection.scale()).rotate(projection.rotate())
+      .translate(projection.translate()).clipExtent([[3, 3], [357, BOARD.y1 + 6]]));
     const pieces: Piece[] = chosen.map(c => {
-      const [[x0, y0], [x1, y1]] = path.bounds(c.feature);
+      const f = trimmed.get(c.iso2!)!;
+      const [[x0, y0], [x1, y1]] = path.bounds(f);
       const localProjection = geoNaturalEarth1().scale(projection.scale()).rotate(projection.rotate()).translate([projection.translate()[0] - x0, projection.translate()[1] - y0]);
       const width = Math.max(1, x1 - x0), height = Math.max(1, y1 - y0);
-      return { id: c.iso2!, d: geoPath(localProjection)(c.feature)!, x: x0, y: y0, width, height,
-        scale: width < 44 || height < 44 ? Math.min(80 / width, 60 / height, Math.max(1, 44 / Math.min(width, height))) : Math.min(1, 90 / width, 65 / height), tiny: width < 44 || height < 44 };
+      const tiny = width < 44 || height < 44;
+      return { id: c.iso2!, d: geoPath(localProjection)(f)!, x: x0, y: y0, width, height,
+        scale: tiny ? Math.min(80 / width, 60 / height, Math.max(1, 44 / Math.min(width, height))) : 1, tiny };
     });
+    // Ίδια κλίμακα για όλα τα κανονικά κομμάτια στον δίσκο, ώστε τα μεγέθη να συγκρίνονται με τον πίνακα.
+    const trayScale = Math.min(1, ...pieces.filter(p => !p.tiny).map(p => Math.min(104 / p.width, 92 / p.height)));
+    for (const p of pieces) if (!p.tiny) p.scale = trayScale;
     const geometries = topology.raw.objects.countries.geometries.filter(g => s.round.countries.some(id => getCountryByIsoNumeric(String(g.id))?.iso2 === id));
     const subset = { type: 'GeometryCollection' as const, geometries };
-    const exterior = path(mesh(topology.raw, subset, (a, b) => a === b));
+    const exterior = boardPath(mesh(topology.raw, subset, (a, b) => a === b));
     const selectedNumeric = new Set(chosen.map(c => c.isoNumeric));
-    const coast = path(mesh(topology.raw, topology.raw.objects.countries, (a, b) => a === b && selectedNumeric.has(String(a.id))));
+    const coast = boardPath(mesh(topology.raw, topology.raw.objects.countries, (a, b) => a === b && selectedNumeric.has(String(a.id))));
     const borders = new Map<string, string>();
     for (const a of s.round.countries) for (const b of BORDERS[a] ?? []) {
       if (!s.round.countries.includes(b) || a > b) continue;
-      const line = path(mesh(topology.raw, topology.raw.objects.countries, (g1, g2) => {
+      const line = boardPath(mesh(topology.raw, topology.raw.objects.countries, (g1, g2) => {
         const x = getCountryByIsoNumeric(String(g1.id))?.iso2, y = getCountryByIsoNumeric(String(g2.id))?.iso2;
         return x === a && y === b || x === b && y === a;
       }));
@@ -79,8 +89,8 @@ function PuzzleRound({ session: s }: { session: ReturnType<typeof useGeoSession<
     geom.pieces.forEach((p, i) => {
       const slot = (i + Math.ceil(geom.pieces.length / 2)) % geom.pieces.length;
       const col = slot % 3, row = Math.floor(slot / 3);
-      start[p.id] = { x: 12 + col * 116 + (96 - p.width * p.scale) / 2,
-        y: 286 + row * 105 + (70 - p.height * p.scale) / 2, scale: p.scale };
+      start[p.id] = { x: 10 + col * 116 + (104 - p.width * p.scale) / 2,
+        y: TRAY_TOP + 14 + row * 124 + (96 - p.height * p.scale) / 2, scale: p.scale };
     });
     setPositions(start);
     started.current = performance.now();
@@ -127,8 +137,8 @@ function PuzzleRound({ session: s }: { session: ReturnType<typeof useGeoSession<
     } else {
       setMisdrops(v => v + 1);
       const slot = traySlot(piece);
-      setPositions(v => ({ ...v, [id]: { x: 12 + (slot % 3) * 116 + (96 - piece.width * piece.scale) / 2,
-        y: 286 + Math.floor(slot / 3) * 105 + (70 - piece.height * piece.scale) / 2,
+      setPositions(v => ({ ...v, [id]: { x: 10 + (slot % 3) * 116 + (104 - piece.width * piece.scale) / 2,
+        y: TRAY_TOP + 14 + Math.floor(slot / 3) * 124 + (96 - piece.height * piece.scale) / 2,
         scale: piece.scale } }));
     }
   };
@@ -136,12 +146,13 @@ function PuzzleRound({ session: s }: { session: ReturnType<typeof useGeoSession<
   return <>
     <h1>Ο άτλαντας έγινε κομμάτια</h1>
     <p>{s.round.title} · Σύρε τις χώρες στη σωστή θέση.</p>
-    <svg ref={svgRef} className={`puzzle__stage ${reduced ? 'puzzle__stage--still' : ''}`} viewBox={`0 0 360 ${s.answered ? 268 : 550}`} onPointerMove={move} onPointerUp={end} onPointerCancel={end}
+    <div className="puzzle__wrap">
+    <svg ref={svgRef} className={`puzzle__stage ${reduced ? 'puzzle__stage--still' : ''}`} viewBox={`0 0 360 ${s.answered ? BOARD.y1 + 10 : STAGE_H}`} onPointerMove={move} onPointerUp={end} onPointerCancel={end}
       role="img" aria-label="Παζλ χωρών με δίσκο κομματιών">
-      <rect x="3" y="3" width="354" height="260" rx="16" fill="#e6f5fa" stroke="#9ccbd7" />
+      <rect x="3" y="3" width="354" height={BOARD.y1 + 4} rx="16" fill="#e6f5fa" stroke="#9ccbd7" />
       {s.state.config.difficulty === 'easy' && geom.exterior && <path d={geom.exterior} fill="none" stroke="#a2aaa3" strokeWidth="2" opacity=".65" />}
       {s.state.config.difficulty === 'medium' && geom.coast && <path d={geom.coast} fill="none" stroke="#a2aaa3" strokeWidth="1" opacity=".6" />}
-      {!s.answered && <rect x="3" y="274" width="354" height="270" rx="16" fill="#fff3d6" stroke="#dfc98c" />}
+      {!s.answered && <rect x="3" y={TRAY_TOP} width="354" height="270" rx="16" fill="#fff3d6" stroke="#dfc98c" />}
       {[...geom.borders].filter(([pair]) => pair.split('-').every(id => joined.includes(id))).map(([pair, d]) =>
         <path key={pair} d={d} fill="none" stroke="#ffb233" strokeWidth="4" className="puzzle__joined" />)}
       {geom.pieces.map((piece, index) => {
@@ -150,21 +161,28 @@ function PuzzleRound({ session: s }: { session: ReturnType<typeof useGeoSession<
         return <g key={piece.id} transform={`translate(${pos.x} ${pos.y}) scale(${pos.scale})`}
           className={`puzzle__piece ${placed.includes(piece.id) ? 'puzzle__piece--placed' : ''} ${active === piece.id ? 'puzzle__piece--active' : ''}`}
           onPointerDown={e => begin(e, piece)} aria-label={country.nameGreek}>
-          <path d={piece.d} fill={s.answered ? FINISH_COLORS[index] : '#ffcc7a'} stroke="#a76d36" strokeWidth="1.5" />
+          <path d={piece.d} fill={s.answered ? FINISH_COLORS[index] : '#ffcc7a'} stroke="#a76d36" strokeWidth="1.5" vectorEffect="non-scaling-stroke" />
           <rect x={piece.width / 2 - Math.max(piece.width, 52 / pos.scale) / 2}
             y={piece.height / 2 - Math.max(piece.height, 52 / pos.scale) / 2}
             width={Math.max(piece.width, 52 / pos.scale)} height={Math.max(piece.height, 52 / pos.scale)} fill="transparent" />
-          {!s.answered && <g transform={`translate(${piece.width / 2} ${piece.height / 2}) scale(${1 / pos.scale})`} pointerEvents="none">
-            <foreignObject x="-19" y="-20" width="38" height="42">
-              <CountryBall country={country} size={34} reactive={false} speechEnabled={false}
-                mood={s.answered ? 'celebrate' : active === piece.id ? 'nervous' : lastSnap && placed.includes(piece.id) && (piece.id === lastSnap || BORDERS[lastSnap]?.includes(piece.id)) ? 'wave' : placed.includes(piece.id) ? 'proud' : 'idle'} />
-            </foreignObject>
-          </g>}
           {piece.tiny && !placed.includes(piece.id) && <text x={2 / pos.scale} y={-4 / pos.scale}
             fontSize={11 / pos.scale} fill="#21405a">🔍 {country.nameGreek}</text>}
         </g>;
       })}
     </svg>
+    {!s.answered && <div className="puzzle__balls" aria-hidden="true">
+      {geom.pieces.map(piece => {
+        const pos = placed.includes(piece.id) ? { x: piece.x, y: piece.y, scale: 1 } : positions[piece.id];
+        const inTray = !placed.includes(piece.id) && active !== piece.id;
+        const w = piece.width * pos.scale, h = piece.height * pos.scale;
+        const cx = inTray ? Math.min(pos.x + w + 4, 342) : pos.x + w / 2, cy = inTray ? pos.y + h : pos.y + h / 2;
+        return <div key={piece.id} className="puzzle__ball" style={{ left: `${cx / 360 * 100}%`, top: `${cy / STAGE_H * 100}%` }}>
+          <CountryBall country={getCountryByIsoCode(piece.id)!} size={inTray ? 26 : 34} reactive={false} speechEnabled={false}
+            mood={active === piece.id ? 'nervous' : lastSnap && placed.includes(piece.id) && (piece.id === lastSnap || BORDERS[lastSnap]?.includes(piece.id)) ? 'wave' : placed.includes(piece.id) ? 'proud' : 'idle'} />
+        </div>;
+      })}
+    </div>}
+    </div>
     {s.answered && <ul className="puzzle__legend" aria-label="Χώρες του ολοκληρωμένου χάρτη">
       {geom.pieces.map((piece, index) => {
         const country = getCountryByIsoCode(piece.id)!;

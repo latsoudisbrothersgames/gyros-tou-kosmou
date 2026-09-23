@@ -1,7 +1,6 @@
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
 import { mkdirSync } from 'node:fs';
-import { geoNaturalEarth1, geoPath } from 'd3-geo';
 import { feature } from 'topojson-client';
 import topo from 'world-atlas/countries-50m.json' with { type: 'json' };
 import { base, withPreview } from './probe_helpers.mjs';
@@ -40,16 +39,17 @@ function solve(start, end, tickets, easy) {
   }
   throw new Error(`Δεν υπάρχει διαδρομή ${start}-${end}`);
 }
+// Στόχοι από την ΙΔΙΑ γεωμετρία με το παιχνίδι (src/game/puzzleGeometry.ts), όχι αντίγραφο.
+const geo = JSON.parse(execFileSync(process.execPath, ['--import', './scripts/register_ts.mjs', '--input-type=module', '-e',
+  "import {geoNaturalEarth1, geoPath} from 'd3-geo'; import {feature} from 'topojson-client'; import topo from 'world-atlas/countries-50m.json' with {type:'json'};" +
+  " import {ALL_COUNTRIES} from './src/data/countries.ts'; import {ATLAS_PUZZLES} from './src/data/puzzles.ts'; import {BOARD, STAGE_H, trimRemote} from './src/game/puzzleGeometry.ts';" +
+  " const num = new Map(ALL_COUNTRIES.map(c => [c.isoNumeric, c.iso2])); const fs = new Map(feature(topo, topo.objects.countries).features.map(f => [num.get(String(f.id)), f]));" +
+  " const out = {}; for (const p of ATLAS_PUZZLES) { const sel = p.countries.map(id => trimRemote(fs.get(id)));" +
+  " const path = geoPath(geoNaturalEarth1().fitExtent([[BOARD.x0, BOARD.y0], [BOARD.x1, BOARD.y1]], {type:'FeatureCollection', features: sel}));" +
+  " out[p.id] = Object.fromEntries(p.countries.map((id, i) => { const [[x0,y0],[x1,y1]] = path.bounds(sel[i]); return [id, {x:(x0+x1)/2, y:(y0+y1)/2}]; })); }" +
+  " console.log(JSON.stringify({STAGE_H, targets: out}))"], { encoding: 'utf8' }));
 function puzzleTargets(puzzle) {
-  const selected = puzzle.countries.map(id => byFeature.get(id));
-  assert.ok(selected.every(Boolean));
-  const projection = geoNaturalEarth1().fitExtent([[18,18],[342,238]],
-    { type: 'FeatureCollection', features: selected });
-  const path = geoPath(projection);
-  return new Map(puzzle.countries.map((id, i) => {
-    const [[x0,y0],[x1,y1]] = path.bounds(selected[i]);
-    return [id, { x: (x0+x1)/2, y: (y0+y1)/2 }];
-  }));
+  return new Map(Object.entries(geo.targets[puzzle.id]));
 }
 mkdirSync('tools/shots', { recursive: true });
 await withPreview(async ({ page }) => {
@@ -110,8 +110,11 @@ await withPreview(async ({ page }) => {
       solution = detour;
     }
     if (i === 1) {
-      const other = data.countries.find(c => c.continent === byIso.get(balls[0]).continent
-        && byFeature.has(c.iso2) && c.iso2 !== balls[0] && !options(balls[0], c.iso2, false).length);
+      // Ο χάρτης είναι τοπικός: η «λάθος» χώρα διαλέγεται ανάμεσα σε όσες φαίνονται και πατιούνται.
+      const onMap = await round().locator('svg.regional-map g[role="button"]').evaluateAll(nodes => nodes.map(n => n.getAttribute('aria-label')));
+      const other = data.countries.find(c => onMap.includes(c.nameGreek)
+        && c.iso2 !== balls[0] && !options(balls[0], c.iso2, false).length);
+      assert.ok(other, 'Καμία ορατή μη γειτονική χώρα για τον έλεγχο λάθους');
       const wrongTarget = round().locator(`svg.regional-map g[aria-label="${other.nameGreek}"]`);
       await wrongTarget.focus();
       await wrongTarget.press('Enter');
@@ -151,12 +154,12 @@ await withPreview(async ({ page }) => {
     if (i === 0) await shot('puzzle-before');
     for (let j = 0; j < puzzle.countries.length; j++) {
       const id = puzzle.countries[j];
-      const piece = round().locator('.puzzle__piece').filter({ has: page.locator(`.countryball[data-iso2="${id}"]`) });
+      const piece = round().locator(`.puzzle__piece[aria-label="${byIso.get(id).nameGreek}"]`);
       await piece.scrollIntoViewIfNeeded();
       const from = await piece.boundingBox();
       const stage = await round().locator('.puzzle__stage').boundingBox();
       const target = targets.get(id);
-      const tx = stage.x + target.x * stage.width / 360, ty = stage.y + target.y * stage.height / 550;
+      const tx = stage.x + target.x * stage.width / 360, ty = stage.y + target.y * stage.height / geo.STAGE_H;
       await page.mouse.move(from.x + from.width / 2, from.y + from.height / 2);
       await page.mouse.down();
       if (i === 1 && j === 0) {

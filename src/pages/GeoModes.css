@@ -55,3 +55,9 @@
 .puzzle__legend .countryball { flex: 0 0 24px; }
 .puzzle__swatch { flex: 0 0 18px; width: 18px; height: 18px; border: 1px solid #946743; border-radius: 5px; }
 @media (prefers-reduced-motion: reduce) { .neighbors__table .countryball { animation: none; } }
+
+/* Μπάλες του παζλ ως HTML πάνω από το SVG (όχι foreignObject — λάθος θέση στο iOS Safari) */
+.puzzle__wrap { position: relative; width: 100%; max-width: 450px; margin: 12px auto; }
+.puzzle__wrap .puzzle__stage { margin: 0; }
+.puzzle__balls { position: absolute; inset: 0; pointer-events: none; }
+.puzzle__ball { position: absolute; transform: translate(-50%, -50%); pointer-events: none; }
