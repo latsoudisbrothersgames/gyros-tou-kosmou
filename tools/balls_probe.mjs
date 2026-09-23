@@ -70,11 +70,13 @@ await withPreview(async ({ page }) => {
   await tap();
   await playful.locator('.speech-bubble').filter({ hasText: 'Χι χι!' }).waitFor();
   await shot('tap-one');
-  await tap(); await tap();
+  await page.waitForTimeout(1200);
+  await tap(); await tap(); await tap();
   await page.locator('.atlas__ball .countryball--giggle').waitFor();
   await playful.locator('.speech-bubble').filter({ hasText: 'με γαργαλάς' }).waitFor();
   await shot('tap-three');
-  await tap(); await tap(); await tap();
+  await page.waitForTimeout(1200);
+  await tap(); await tap(); await tap(); await tap(); await tap(); await tap();
   await page.locator('.atlas__ball .countryball--dizzy').waitFor();
   await shot('tap-six');
   await playful.dispatchEvent('pointerdown');
@@ -97,7 +99,11 @@ await withPreview(async ({ page }) => {
   const before = await friend.getAttribute('style');
   const box = await friend.boundingBox();
   await page.mouse.move(box.x + 30, box.y + 30); await page.mouse.down();
+  await friend.locator('.countryball--curious').waitFor();
+  await shot('curious');
   await page.mouse.move(box.x + 105, box.y + 65, { steps: 8 }); await page.mouse.up();
+  await friend.locator('.countryball--excited').waitFor();
+  await shot('excited');
   await page.waitForTimeout(250);
   assert.notEqual(await friend.getAttribute('style'), before);
   await shot('yard-drag');
