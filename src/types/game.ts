@@ -9,7 +9,7 @@ export type QuestionType =
   | 'LANDMARK_TO_COUNTRY';
 
 /** Λειτουργίες παιχνιδιού όπως εμφανίζονται στο μενού */
-export type GameModeId = 'country' | 'capital' | 'flags' | 'map' | 'landmark' | 'scratch' | 'whoami' | 'parade' | 'bigger';
+export type GameModeId = 'country' | 'capital' | 'flags' | 'map' | 'landmark' | 'scratch' | 'whoami' | 'parade' | 'bigger' | 'neighbors' | 'post' | 'puzzle';
 
 export const GAME_MODE_LABELS: Record<GameModeId, string> = {
   country: 'Βρες τη Χώρα',
@@ -21,6 +21,9 @@ export const GAME_MODE_LABELS: Record<GameModeId, string> = {
   whoami: 'Ποιος είμαι;',
   parade: 'Παρέλαση Σημαιών',
   bigger: 'Ποια είναι η μεγαλύτερη;',
+  neighbors: 'Οι γείτονες χτυπούν την πόρτα',
+  post: 'Το ταχυδρομείο των CountryBalls',
+  puzzle: 'Ο άτλαντας έγινε κομμάτια',
 };
 
 export type DifficultyId = 'easy' | 'medium' | 'hard';

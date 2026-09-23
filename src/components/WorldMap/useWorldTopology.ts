@@ -16,6 +16,7 @@ export interface CountryFeature {
 
 export interface WorldTopology {
   countries: CountryFeature[];
+  raw: Topology<{ countries: GeometryCollection }>;
   /** iso2 όλων των χωρών που έχουν γεωμετρία στον χάρτη */
   availableIso2: Set<string>;
 }
@@ -51,7 +52,7 @@ async function loadTopology(): Promise<WorldTopology> {
     });
   }
 
-  return { countries, availableIso2 };
+  return { countries, availableIso2, raw: topo };
 }
 
 export function getWorldTopology(): Promise<WorldTopology> {

@@ -114,5 +114,22 @@ check(!validComparison({ ...a, areaKm2: 0 }, b, 'areaKm2', 'hard'), 'zero area e
 check(!validComparison({ ...a, population: Infinity }, b, 'population', 'hard'), 'infinite population excluded');
 check(!validComparison({ ...a, population: 114 }, { ...b, population: 100 }, 'population', 'hard'), 'close pair excluded');
 check(validComparison({ ...a, population: 115 }, { ...b, population: 100 }, 'population', 'hard'), '15 percent boundary included');
+
+const { makeNeighborsPuzzle } = await import('../src/game/neighborsPuzzles');
+const { landNeighbors } = await import('../src/data/borders');
+const { scoreNeighbors } = await import('../src/game/scoring');
+check(scoreNeighbors(4, 0, 0, 0) === 100, 'neighbors perfect');
+check(scoreNeighbors(4, 0, 0, 3) === 130, 'neighbors streak');
+check(scoreNeighbors(1, 3, 2, 0) === 0, 'neighbors floor');
+for (const difficulty of ['easy', 'medium', 'hard'] as const) {
+  for (let i = 0; i < 200; i++) {
+    const p = makeNeighborsPuzzle(difficulty);
+    check(p.guests.length === { easy: 6, medium: 7, hard: 8 }[difficulty], 'neighbor guest count');
+    check(new Set(p.guests.map(c => c.iso2)).size === p.guests.length, 'neighbor distinct guests');
+    check(p.correct.every(id => p.guests.some(c => c.iso2 === id) && landNeighbors(p.host.iso2, difficulty !== 'easy').includes(id)), 'neighbor true choices');
+    check(p.guests.filter(c => !p.correct.includes(c.iso2)).every(c => !landNeighbors(p.host.iso2, difficulty !== 'easy').includes(c.iso2)), 'neighbor traps');
+    check(difficulty !== 'easy' || p.host.tier === 1 && p.totalNeighbors >= 2 && p.totalNeighbors <= 5, 'neighbor easy pool');
+  }
+}
 console.log(fails === 0 ? 'ENGINE OK' : `${fails} failures`);
 process.exit(fails ? 1 : 0);

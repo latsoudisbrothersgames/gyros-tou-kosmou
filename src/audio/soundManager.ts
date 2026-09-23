@@ -3,7 +3,7 @@
  * κανένα autoplay: ο ήχος παράγεται μόνο ως απόκριση σε ενέργεια του χρήστη.
  */
 
-export type SoundName = 'blip' | 'correct' | 'wrong' | 'click' | 'highscore' | 'spawn' | 'magic' | 'stamp';
+export type SoundName = 'blip' | 'correct' | 'wrong' | 'click' | 'highscore' | 'spawn' | 'magic' | 'stamp' | 'door' | 'delivery' | 'snap' | 'ship';
 
 let ctx: AudioContext | null = null;
 let enabled = true;
@@ -136,6 +136,21 @@ export function playSound(name: SoundName): void {
   if (!audio) return;
   const now = audio.currentTime;
   switch (name) {
+    case 'door':
+      tone(audio, 180, now, 0.09, 'triangle', 0.11);
+      tone(audio, 180, now + 0.16, 0.09, 'triangle', 0.11);
+      break;
+    case 'delivery':
+      tone(audio, 660, now, 0.12);
+      tone(audio, 990, now + 0.12, 0.22);
+      break;
+    case 'snap':
+      tone(audio, 940, now, 0.045, 'square', 0.04);
+      break;
+    case 'ship':
+      tone(audio, 330, now, 0.3, 'sine', 0.07);
+      tone(audio, 392, now + 0.12, 0.35, 'sine', 0.07);
+      break;
     case 'correct':
       tone(audio, 523.25, now, 0.12, 'sine');
       tone(audio, 659.25, now + 0.09, 0.12, 'sine');

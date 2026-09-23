@@ -53,3 +53,11 @@ export function scoreWithHints(hintsUsed: number, streak: number): ScoreBreakdow
   const streakBonus = Math.min(Math.max(0, streak), MAX_STREAK_BONUS_STEPS) * STREAK_BONUS_PER_STEP;
   return { base, streakBonus, timeBonus: 0, total: base + streakBonus };
 }
+
+/** Τέλειος γύρος: 100 και μπόνους σερί. Αλλιώς αναλογική πίστωση. */
+export function scoreNeighbors(correctPicked: number, missed: number, wrongPicked: number, streak: number): number {
+  const total = correctPicked + missed;
+  const perfect = missed === 0 && wrongPicked === 0;
+  if (perfect) return 100 + Math.min(streak, MAX_STREAK_BONUS_STEPS) * STREAK_BONUS_PER_STEP;
+  return Math.max(0, Math.round(100 * (total ? correctPicked / total : 0) - 20 * wrongPicked));
+}

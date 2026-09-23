@@ -22,6 +22,9 @@ const MODES: { id: GameModeId; icon: string; text: string; accent: string }[] = 
   { id: 'bigger', icon: '⚖️', text: 'Σύγκρινε πληθυσμό και έκταση χωρών', accent: 'leaf' },
   { id: 'parade', icon: '🎠', text: 'Πρόλαβε τη σωστή σημαία στην παρέλαση', accent: 'sun' },
   { id: 'whoami', icon: '🕵️', text: 'Μάντεψε τη χώρα με τρεις ενδείξεις', accent: 'grape' },
+  { id: 'neighbors', icon: '🏠', text: 'Βρες ποιοι έχουν χερσαία σύνορα', accent: 'leaf' },
+  { id: 'post', icon: '📦', text: 'Στείλε δέμα μέσα από χώρες', accent: 'ocean' },
+  { id: 'puzzle', icon: '🧩', text: 'Ταίριαξε χώρες στον άτλαντα', accent: 'sun' },
   { id: 'scratch', icon: '🖐️', text: 'Ξύσε το κάλυμμα και μάντεψε τη σημαία', accent: 'coral' },
 ];
 
@@ -40,7 +43,7 @@ function isGameMode(v: string | undefined): v is GameModeId {
     v === 'flags' ||
     v === 'map' ||
     v === 'landmark' ||
-    v === 'scratch' || v === 'whoami' || v === 'parade' || v === 'bigger'
+    v === 'scratch' || v === 'whoami' || v === 'parade' || v === 'bigger' || v === 'neighbors' || v === 'post' || v === 'puzzle'
   );
 }
 

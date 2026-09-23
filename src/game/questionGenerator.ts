@@ -238,6 +238,9 @@ function questionTypesForMode(config: GameConfig): QuestionType[] {
     case 'bigger':
     case 'parade':
     case 'whoami':
+    case 'neighbors':
+    case 'post':
+    case 'puzzle':
       throw new Error('Το νέο mode έχει δική του ροή ερωτήσεων.');
     case 'scratch':
       // Η σελίδα «Ξύσε τη Σημαία» χρειάζεται επιλογές τύπου σημαία → χώρα

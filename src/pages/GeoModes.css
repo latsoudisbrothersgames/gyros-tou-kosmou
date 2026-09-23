@@ -1,0 +1,19 @@
+.geo-mode { max-width: 760px; }
+.regional-map { display: block; width: 100%; height: auto; max-height: 250px; margin: 12px auto; border-radius: 16px; }
+.regional-map--loading { min-height: 180px; display: grid; place-items: center; background: #e6f5fa; }
+.regional-map [role="button"] { cursor: pointer; }
+.neighbors__house { position: relative; width: 120px; margin: 8px auto 0; display: grid; justify-items: center; }
+.neighbors__house > span { position: absolute; font-size: 7rem; line-height: 1; opacity: .32; }
+.neighbors__house .countryball { position: relative; margin-top: 18px; }
+.neighbors__guests { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin: 12px 0; }
+.neighbors__guest { display: flex; align-items: center; gap: 5px; min-height: 65px; border: 2px solid #b5d8e0; border-radius: 14px; background: #fff; padding: 5px; color: #18314a; font: inherit; font-size: .78rem; font-weight: 800; text-align: left; }
+.neighbors__guest[aria-pressed="true"] { background: #fff4d6; border-color: #e6a445; }
+.neighbors__guest--right { background: #e1f8ea !important; border-color: #24805a !important; }
+.neighbors__guest--wrong { background: #fff0ed !important; border-color: #c34c4c !important; }
+.neighbors__guest .countryball { flex: 0 0 46px; }
+.neighbors__guest small { display: block; font-size: .7rem; }
+.neighbors__none { min-height: 48px; border: 2px dashed #678f9d; border-radius: 12px; padding: 8px 12px; margin-bottom: 12px; background: #fff; color: #18314a; font: inherit; font-weight: 800; }
+.neighbors__none[aria-pressed="true"] { background: #fff4d6; }
+.geo-mode__bubble { position: relative; height: 90px; margin-top: 90px; }
+.geo-mode__bubble .speech-bubble { bottom: 0; }
+@media (max-width: 390px) { .neighbors__guest { font-size: .72rem; } }

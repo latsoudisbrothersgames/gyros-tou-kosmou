@@ -27,7 +27,7 @@ export function parseGameConfig(
     mode !== 'flags' &&
     mode !== 'map' &&
     mode !== 'landmark' &&
-    mode !== 'scratch' && mode !== 'whoami' && mode !== 'parade' && mode !== 'bigger'
+    mode !== 'scratch' && mode !== 'whoami' && mode !== 'parade' && mode !== 'bigger' && mode !== 'neighbors' && mode !== 'post' && mode !== 'puzzle'
   ) {
     return null;
   }
