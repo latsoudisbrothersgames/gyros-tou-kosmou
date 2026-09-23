@@ -1,10 +1,14 @@
 import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { geoDistance } from 'd3-geo';
 import { parseGameConfig } from './QuizGamePage';
 import { useGeoSession } from '../hooks/useGeoSession';
 import { makePostPuzzle, postConstraintMet, travelOptions, POST_SKIP, type TicketKind, type Tickets } from '../game/postPuzzles';
 import { scorePost } from '../game/scoring';
 import { ALL_COUNTRIES, getCountryByIsoCode } from '../data/countries';
+import { CENTROIDS } from '../data/centroids';
+import { landNeighbors } from '../data/borders';
+import { TRAVEL_LINKS } from '../data/links';
 import { SpeechBubble } from '../components/SpeechBubble/SpeechBubble';
 import { CountryBall } from '../components/CountryBall/CountryBall';
 import { RegionalMap } from '../components/RegionalMap/RegionalMap';
@@ -32,11 +36,13 @@ function PostRound({ session: s }: { session: ReturnType<typeof useGeoSession<Re
   const [kinds, setKinds] = useState<TicketKind[]>([]);
   const [message, setMessage] = useState('Πάτησε διαδοχικές χώρες στον χάρτη.');
   const [moving, setMoving] = useState(false);
+  const [movingStep, setMovingStep] = useState(0);
   const [pending, setPending] = useState<{ id: string; options: TicketKind[] } | null>(null);
   const [invalid, setInvalid] = useState(false);
   const reduced = useReducedMotion();
   const reactions = useReactions();
   const current = route.at(-1)!;
+  const mapCurrent = moving ? route[Math.min(movingStep, route.length - 1)] : current;
   const advance = (id: string, kind: TicketKind) => {
     setRoute(v => [...v, id]); setKinds(v => [...v, kind]); setUsed(v => ({ ...v, [kind]: v[kind] + 1 }));
     setMessage(`Τώρα το δέμα βρίσκεται ${destination(getCountryByIsoCode(id)?.nameGreekAccusative ?? 'τον επόμενο σταθμό')}.`);
@@ -64,17 +70,26 @@ function PostRound({ session: s }: { session: ReturnType<typeof useGeoSession<Re
   const depart = () => {
     if (current !== p.receiver.iso2 || moving || s.answered) return;
     setMoving(true); reactions?.emit({ type: 'post:depart', iso2: p.sender.iso2 });
+    setMovingStep(0);
     const met = postConstraintMet(p, route, kinds);
     const finish = () => {
       s.complete(p.receiver.iso2, true, scorePost(route.length - 1, p.shortest.length - 1, met, s.state.streak), route);
       setMessage(met ? `Το δέμα έφτασε! ${p.receiver.factsGreek[0]}` : 'Το δέμα έφτασε, αλλά ο περιορισμός δεν τηρήθηκε.');
       playSound('delivery'); reactions?.emit({ type: 'post:deliver', iso2: p.receiver.iso2 }); setMoving(false);
     };
-    if (reduced) finish(); else window.setTimeout(finish, Math.min(4000, route.length * 650));
+    if (reduced) finish(); else {
+      for (let step = 1; step < route.length - 1; step++) window.setTimeout(() => setMovingStep(step), step * 650);
+      window.setTimeout(finish, (route.length - 1) * 650);
+    }
   };
   const nearby = ALL_COUNTRIES.filter(c => !POST_SKIP.has(c.iso2) && c.iso2 !== current && !route.includes(c.iso2)
     && travelOptions(current, c.iso2, s.state.config.difficulty !== 'easy').some(kind => used[kind] < p.tickets[kind]));
-  const visible = ALL_COUNTRIES.filter(c => c.continent === p.sender.continent || c.continent === p.receiver.continent).map(c => c.iso2);
+  const frameNeighbors = [...landNeighbors(mapCurrent), ...TRAVEL_LINKS.filter(l => l.kind === 'sea' && (l.a === mapCurrent || l.b === mapCurrent))
+    .map(l => l.a === mapCurrent ? l.b : l.a)];
+  const frame = [mapCurrent, ...frameNeighbors, p.receiver.iso2]
+    .filter((id, index, ids) => ids.indexOf(id) === index && CENTROIDS[id]
+      && geoDistance(CENTROIDS[mapCurrent], CENTROIDS[id]) * 6371 <= 1800);
+  const visible = ALL_COUNTRIES.map(c => c.iso2);
   const subject = ({ την: 'Η', τη: 'Η', τον: 'Ο', το: 'Το', τις: 'Οι', τους: 'Οι', τα: 'Τα' } as Record<string, string>)[p.sender.nameGreekAccusative.split(' ')[0]] ?? 'Η';
   const destination = (value: string) => value.replace(/^(την|τη|τον|το|τις|τους|τα) /, word => ({ την: 'στην ', τη: 'στη ', τον: 'στον ', το: 'στο ', τις: 'στις ', τους: 'στους ', τα: 'στα ' } as Record<string, string>)[word.trim()] ?? word);
   return <>
@@ -85,8 +100,10 @@ function PostRound({ session: s }: { session: ReturnType<typeof useGeoSession<Re
       <span aria-hidden="true">📦</span><CountryBall country={p.receiver} size={58} reactive={false} speechEnabled={false} /></div>
     <div className="post__tickets">{(['land', 'sea', 'air'] as const).map(kind =>
       <span key={kind}>{labels[kind]} × {p.tickets[kind] - used[kind]}</span>)}</div>
-    <RegionalMap iso2s={visible} host={current} onCountry={select} minTouch
-      revealed={s.answered} route={s.answered ? p.shortest : undefined} travelRoute={moving || s.answered ? route : undefined} travelKinds={kinds} moving={moving} />
+    <RegionalMap iso2s={visible} frameIso2s={frame} host={mapCurrent} onCountry={select} minTouch
+      revealed={s.answered} route={s.answered ? p.shortest : undefined}
+      travelRoute={moving ? route.slice(movingStep, movingStep + 2) : s.answered ? route : undefined}
+      travelKinds={moving ? kinds.slice(movingStep, movingStep + 1) : kinds} moving={moving} />
     {!s.answered && <div className="post__nearby"><strong>Επόμενη χώρα:</strong><div>
       {nearby.map(c => <button key={c.iso2} data-country={c.iso2} onClick={() => select(c.iso2)}>{c.nameGreek}</button>)}
     </div></div>}

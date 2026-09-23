@@ -1,39 +1,45 @@
 import { useMemo } from 'react';
-import { geoNaturalEarth1, geoPath } from 'd3-geo';
+import { geoMercator, geoPath } from 'd3-geo';
 import { mesh } from 'topojson-client';
-import type { FeatureCollection, Geometry } from 'geojson';
 import { getCountryByIsoCode, getCountryByIsoNumeric } from '../../data/countries';
+import { CENTROIDS } from '../../data/centroids';
 import { useWorldTopology } from '../WorldMap/useWorldTopology';
 
 interface Props {
-  iso2s: string[]; host?: string; revealed?: boolean; highlighted?: string[];
+  iso2s: string[]; frameIso2s?: string[]; host?: string; revealed?: boolean; highlighted?: string[];
   route?: string[]; travelRoute?: string[]; travelKinds?: ('land' | 'sea' | 'air')[]; moving?: boolean; onCountry?: (iso2: string) => void; minTouch?: boolean;
 }
 /** Μικρός χάρτης από την ήδη φορτωμένη τοπολογία. Δεν αποδίδει απαντήσεις πριν το reveal. */
-export function RegionalMap({ iso2s, host, revealed = false, highlighted = [], route, travelRoute, travelKinds = [], moving = false, onCountry, minTouch = false }: Props) {
+export function RegionalMap({ iso2s, frameIso2s = iso2s, host, revealed = false, highlighted = [], route, travelRoute, travelKinds = [], moving = false, onCountry, minTouch = false }: Props) {
   const { topology } = useWorldTopology();
   const map = useMemo(() => {
     if (!topology) return null;
-    const chosen = topology.countries.filter(c => c.iso2 && iso2s.includes(c.iso2));
-    if (!chosen.length) return null;
-    // Το Τουβαλού δεν υπάρχει στη γεωμετρία 1:50m. Το σημείο του κρατά τον χάρτη και την αφή λειτουργικά.
-    const fallback = iso2s.includes('tv') ? { type: 'Feature' as const, geometry: { type: 'Point' as const, coordinates: [179.2, -8.5] }, properties: {} } : null;
-    const collection: FeatureCollection<Geometry> = { type: 'FeatureCollection', features: [...chosen.map(c => c.feature), ...(fallback ? [fallback] : [])] };
-    const projection = geoNaturalEarth1().fitExtent([[16, 14], [344, 206]], collection);
+    const points = frameIso2s.map(id => CENTROIDS[id]).filter((p): p is [number, number] => !!p);
+    if (!points.length) return null;
+    // Center the projection on the framing set; wrapping around the date line stays local.
+    const anchor = Math.atan2(points.reduce((sum, [lon]) => sum + Math.sin(lon * Math.PI / 180), 0),
+      points.reduce((sum, [lon]) => sum + Math.cos(lon * Math.PI / 180), 0)) * 180 / Math.PI;
+    const unit = geoMercator().rotate([-anchor, 0]).scale(1).translate([0, 0]);
+    const xy = points.map(point => unit(point)!).filter(p => Number.isFinite(p[0]) && Number.isFinite(p[1]));
+    const xs = xy.map(p => p[0]), ys = xy.map(p => p[1]);
+    const x0 = Math.min(...xs), x1 = Math.max(...xs), y0 = Math.min(...ys), y1 = Math.max(...ys);
+    // 25% breathing room on each side and a roughly 1,500 km minimum width.
+    const width = Math.max(x1 - x0, 1500 / 6371);
+    const height = Math.max(y1 - y0, (1500 / 6371) * 220 / 360);
+    const scale = Math.min(328 / (width * 1.5), 192 / (height * 1.5));
+    const projection = geoMercator().rotate([-anchor, 0]).scale(scale)
+      .translate([180 - scale * (x0 + x1) / 2, 110 - scale * (y0 + y1) / 2]);
     const path = geoPath(projection);
     const visible = topology.countries.map(c => ({ ...c, d: path(c.feature) })).filter(c => c.d);
-    const getCenter = (iso: string) => {
-      const f = topology.countries.find(c => c.iso2 === iso);
-      return f ? path.centroid(f.feature) : iso === 'tv' ? projection([179.2, -8.5]) : null;
-    };
+    const getCenter = (iso: string) => CENTROIDS[iso] ? projection(CENTROIDS[iso]) : null;
     const borders = revealed && host && highlighted.length ? mesh(topology.raw, topology.raw.objects.countries,
       (a, b) => {
         const x = getCountryByIsoNumeric(String(a.id))?.iso2;
         const y = getCountryByIsoNumeric(String(b.id))?.iso2;
         return x === host && !!y && highlighted.includes(y) || y === host && !!x && highlighted.includes(x);
       }) : null;
-    return { visible, path, getCenter, borderPath: borders ? path(borders) : null, fallback: fallback ? projection([179.2, -8.5]) : null };
-  }, [topology, iso2s, host, revealed, highlighted]);
+    return { visible, path, getCenter, borderPath: borders ? path(borders) : null, fallback: iso2s.includes('tv') ? projection(CENTROIDS.tv) : null };
+  }, [topology, iso2s, frameIso2s, host, revealed, highlighted]);
   if (!map) return <div className="regional-map regional-map--loading">Ο χάρτης φορτώνει…</div>;
   const routePoints = revealed && route ? route.map(map.getCenter).filter((p): p is [number, number] => !!p && Number.isFinite(p[0])) : [];
   const travelPoints = travelRoute ? travelRoute.map(map.getCenter).filter((p): p is [number, number] => !!p && Number.isFinite(p[0])) : [];
@@ -62,13 +68,15 @@ export function RegionalMap({ iso2s, host, revealed = false, highlighted = [], r
       <circle cx={map.fallback[0]} cy={map.fallback[1]} r="28" fill="transparent" />
       <circle cx={map.fallback[0]} cy={map.fallback[1]} r="5" fill="#e56536" />
     </g>}
-    {onCountry && map.visible.filter(c => c.iso2).map(c => {
+    {onCountry && map.visible.filter(c => c.iso2 && iso2s.includes(c.iso2)).map(c => {
       const center = map.getCenter(c.iso2!);
       if (!center || !Number.isFinite(center[0])) return null;
+      const [[x0, y0], [x1, y1]] = map.path.bounds(c.feature);
+      if (x1 < -28 || x0 > 388 || y1 < -28 || y0 > 248) return null;
       return <g key={`tap-${c.iso2}`} onClick={() => onCountry(c.iso2!)} role="button" tabIndex={0}
         onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') onCountry(c.iso2!); }} aria-label={c.nameGreek}>
         <path d={c.d!} fill="transparent" stroke="none" />
-        {minTouch && (() => { const [[x0, y0], [x1, y1]] = map.path.bounds(c.feature); return x1 - x0 < 44 || y1 - y0 < 44 ? <circle cx={center[0]} cy={center[1]} r="28" fill="transparent" /> : null; })()}
+        {minTouch && (x1 - x0 < 44 || y1 - y0 < 44) && <circle cx={center[0]} cy={center[1]} r="28" fill="transparent" />}
       </g>;
     })}
   </svg>;
