@@ -121,3 +121,26 @@ for (const [kind, lines] of Object.entries(GEO_LINES)) {
   assert.ok(lines.every(line => /[.!;]/.test(line.at(-1) ?? '')), kind);
 }
 console.log('PASS νέα γεγονότα και ελληνικές ατάκες Sprint 3');
+
+const { touchReaction } = await import('../src/reactions/touch.ts');
+assert.equal(touchReaction(1).mood, 'giggle');
+assert.equal(touchReaction(3).mood, 'giggle');
+assert.equal(touchReaction(6).mood, 'dizzy');
+assert.equal(touchReaction(0, true).mood, 'love');
+const { canGreet } = await import('../src/reactions/social.ts');
+assert.equal(canGreet('gr', 'al', true, true), true);
+assert.equal(canGreet('gr', 'al', true, false), false);
+assert.equal(canGreet('gr', 'jp', true, true), false);
+const { ALL_COUNTRIES } = await import('../src/data/countries.ts');
+const ALL_IDS = new Set(ALL_COUNTRIES.map(c => c.iso2));
+const { BALL_ACCESSORIES } = await import('../src/data/ballAccessories.ts');
+assert.ok(Object.keys(BALL_ACCESSORIES).length >= 40 && Object.keys(BALL_ACCESSORIES).length <= 60);
+assert.ok(Object.keys(BALL_ACCESSORIES).every(id => ALL_IDS.has(id)));
+console.log('PASS αγγίγματα, χαιρετισμοί μόνο με ορατή ταυτότητα και αξεσουάρ');
+
+const { ballVoiceFrequency } = await import('../src/audio/soundManager.ts');
+assert.equal(ballVoiceFrequency(), 740);
+assert.equal(ballVoiceFrequency('gr'), ballVoiceFrequency('gr'));
+assert.notEqual(ballVoiceFrequency('gr'), ballVoiceFrequency('jp'));
+assert.ok(ballVoiceFrequency('gr') >= 610 && ballVoiceFrequency('gr') < 920);
+console.log('PASS ουδέτερος και ντετερμινιστικός τόνος WebAudio');

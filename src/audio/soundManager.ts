@@ -130,6 +130,11 @@ export function playScratchSound(surface: ScratchSurface): void {
   }
 }
 
+/** Ουδέτερος τόνος χωρίς έγκριση ταυτότητας, σταθερός τόνος ανά ISO2 μετά. */
+export function ballVoiceFrequency(iso2?: string): number {
+  return iso2 ? 610 + ([...iso2].reduce((n, c) => n * 31 + c.charCodeAt(0), 7) >>> 0) % 310 : 740;
+}
+
 export function playSound(name: SoundName, voiceIso2?: string): void {
   if (!enabled) return;
   const audio = getContext();
@@ -161,7 +166,7 @@ export function playSound(name: SoundName, voiceIso2?: string): void {
       tone(audio, 174.61, now + 0.15, 0.25, 'square', 0.06);
       break;
     case 'blip':
-      tone(audio, voiceIso2 ? 610 + ([...voiceIso2].reduce((n, c) => n * 31 + c.charCodeAt(0), 7) >>> 0) % 310 : 740, now, 0.035, 'triangle', 0.025);
+      tone(audio, ballVoiceFrequency(voiceIso2), now, 0.035, 'triangle', 0.025);
       break;
     case 'click':
       tone(audio, 880, now, 0.05, 'sine', 0.05);
