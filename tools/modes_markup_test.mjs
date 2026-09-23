@@ -5,7 +5,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { MemoryRouter } from 'react-router-dom';
 
 // Έλεγχος του πραγματικού React markup. Δεν υποκαθιστά τα probes κίνησης/offline.
-const server = await createServer({ configFile: false, cacheDir: '/private/tmp/gyros-sprint2-vite-markup-cache', optimizeDeps: { noDiscovery: true, entries: [] }, server: { middlewareMode: true }, appType: 'custom' });
+const server = await createServer({ configFile: false, cacheDir: '/private/tmp/gyros-sprint3-vite-markup-cache', optimizeDeps: { noDiscovery: true, entries: [] }, server: { middlewareMode: true }, appType: 'custom' });
 const originalWindow = globalThis.window;
 globalThis.window = { matchMedia: () => ({ matches: false }) };
 try {
@@ -36,7 +36,22 @@ try {
     if (mode !== 'parade') assert.ok(!/<(?:image|img)\b/.test(markup), `Διαρροή στο ${mode}`);
     else for (let i = 1; i <= count; i++) assert.ok(markup.includes(`aria-label="Σημαία ${i}"`));
   }
-  console.log('PASS React markup: 197 σιλουέτες χωρίς σημαία/ταυτότητα, 197 αποκαλύψεις και 3 αρχικές οθόνες χωρίς λύση');
+  for (const [mode, file, name] of [
+    ['neighbors', 'NeighborsGamePage', 'NeighborsGamePage'],
+    ['post', 'PostGamePage', 'PostGamePage'],
+    ['puzzle', 'PuzzleGamePage', 'PuzzleGamePage'],
+  ]) {
+    const module = await server.ssrLoadModule(`/src/pages/${file}.tsx`);
+    const markup = renderToStaticMarkup(React.createElement(SettingsProvider, null,
+      React.createElement(MemoryRouter, { initialEntries: [`/play/${mode}?focus=gr`] }, React.createElement(module[name]))));
+    assert.ok(markup.includes(`data-mode="${mode}"`));
+    assert.ok(markup.includes('data-answered="false"'));
+    assert.ok(!markup.includes('data-answer='));
+    assert.ok(!markup.includes('neighbors__guest--right'));
+    assert.ok(!markup.includes('Η πιο σύντομη'));
+    assert.ok(!markup.includes('puzzle__piece--placed') || mode === 'puzzle');
+  }
+  console.log('PASS React markup: 197 σιλουέτες χωρίς σημαία/ταυτότητα, 197 αποκαλύψεις και 6 αρχικές οθόνες χωρίς λύση');
 } finally {
   globalThis.window = originalWindow;
   await server.close();

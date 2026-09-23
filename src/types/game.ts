@@ -85,6 +85,8 @@ export interface AnswerRecord {
   timeMs: number;
   /** Η απάντηση ξεκλείδωσε τη φιγούρα της χώρας για ΠΡΩΤΗ φορά */
   discovered?: boolean;
+  /** Όλες οι νέες χώρες ενός γύρου πολλαπλών χωρών. */
+  discoveredIso2?: string[];
 }
 
 export interface SessionState {

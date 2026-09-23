@@ -24,5 +24,8 @@ export const SPECIAL_BORDERS: SpecialBorder[] = [
   { a: 'fr', b: 'nl', kind: 'overseas', noteGreek: 'Η Γαλλία και η Ολλανδία συναντιούνται στο νησί του Αγίου Μαρτίνου.' },
   { a: 'es', b: 'ma', kind: 'exclave', noteGreek: 'Η Ισπανία και το Μαρόκο συναντιούνται στη Θέουτα και τη Μελίγια.' },
   { a: 'es', b: 'gb', kind: 'overseas', noteGreek: 'Η Ισπανία και το Ηνωμένο Βασίλειο συναντιούνται στο Γιβραλτάρ.' },
+  { a: 'ru', b: 'pl', kind: 'exclave', noteGreek: 'Η Ρωσία συναντά την Πολωνία μέσω του Καλίνινγκραντ.' },
+  { a: 'ru', b: 'lt', kind: 'exclave', noteGreek: 'Η Ρωσία συναντά τη Λιθουανία μέσω του Καλίνινγκραντ.' },
+  { a: 'az', b: 'tr', kind: 'exclave', noteGreek: 'Το Αζερμπαϊτζάν συναντά την Τουρκία μέσω του Ναχτσιβάν.' },
   { a: 'ca', b: 'dk', kind: 'overseas', noteGreek: 'Ο Καναδάς και η Δανία μοιράζονται ένα πολύ μικρό νησί στον βορρά.' },
 ];

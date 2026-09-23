@@ -21,7 +21,7 @@ export function GeoModeLayout({ state, total, answered, next, restart, finish, c
     </div>
     <ScoreDisplay score={state.score} streak={state.streak} questionNumber={state.questionIndex + 1} totalQuestions={total} />
     <ExplorerPassport stops={state.answers} totalQuestions={total} compact />
-    <section className="new-mode__round card" data-mode={state.config.mode} data-answered={answered}>
+    <section className="new-mode__round card" data-mode={state.config.mode} data-answered={answered} data-round={state.questionIndex}>
       {children}
       {last && <div className="new-mode__feedback" role="status">
         <p>{last.correct ? `✓ Μπράβο! +${last.pointsAwarded} πόντοι` : `Προσπάθησε ξανά στον επόμενο γύρο! +${last.pointsAwarded} πόντοι`}</p>

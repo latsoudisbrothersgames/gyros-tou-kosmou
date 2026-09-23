@@ -107,3 +107,17 @@ mood({ type: 'parade:miss', iso2: 'gr' }, 'gr', 'sad');
 mood({ type: 'parade:miss', iso2: 'gr' }, 'jp', undefined);
 assert.equal(reactionFor({ type: 'parade:miss', iso2: 'gr' }, 'gr')?.steps[0].durationMs, 2000);
 console.log('PASS parade:miss στόχος, άσχετη χώρα και διάρκεια');
+
+mood({ type: 'neighbors:open', host: 'gr', guests: ['al'] }, 'gr', 'celebrate');
+mood({ type: 'neighbors:open', host: 'gr', guests: ['al'] }, 'al', 'wave');
+mood({ type: 'neighbors:open', host: 'gr', guests: ['al'] }, 'jp', undefined);
+mood({ type: 'post:depart', iso2: 'gr' }, 'gr', 'proud');
+mood({ type: 'post:deliver', iso2: 'it' }, 'it', 'celebrate');
+mood({ type: 'puzzle:snap', iso2: 'gr', neighbors: ['al'] }, 'al', 'wave');
+const { GEO_LINES } = await import('../src/data/ballLines.ts');
+for (const [kind, lines] of Object.entries(GEO_LINES)) {
+  assert.ok(lines.length >= 6 && lines.length <= 8, kind);
+  assert.equal(new Set(lines).size, lines.length);
+  assert.ok(lines.every(line => /[.!;]/.test(line.at(-1) ?? '')), kind);
+}
+console.log('PASS νέα γεγονότα και ελληνικές ατάκες Sprint 3');

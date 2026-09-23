@@ -18,6 +18,16 @@ export function reactionFor(event: ReactionEvent, iso2: string): Reaction | null
       ], speech: 'mood' };
     case 'timer:low':
       return { steps: [{ mood: event.secondsLeft > 0 && event.secondsLeft < 3 ? 'nervous' : 'idle' }] };
+    case 'neighbors:open':
+      return event.host === iso2 ? { steps: [{ mood: 'celebrate', durationMs: 1800 }, { mood: 'happy' }] }
+        : event.guests.includes(iso2) ? { steps: [{ mood: 'wave', durationMs: 1400 }, { mood: 'happy' }] } : null;
+    case 'post:depart':
+      return event.iso2 === iso2 ? { steps: [{ mood: 'proud', durationMs: 1500 }, { mood: 'idle' }] } : null;
+    case 'post:deliver':
+      return event.iso2 === iso2 ? { steps: [{ mood: 'celebrate', durationMs: 2000 }, { mood: 'happy' }] } : null;
+    case 'puzzle:snap':
+      return event.iso2 === iso2 || event.neighbors.includes(iso2)
+        ? { steps: [{ mood: 'wave', durationMs: 1500 }, { mood: 'proud' }] } : null;
     case 'parade:miss':
       return event.iso2 === iso2 ? { steps: [{ mood: 'sad', durationMs: 2000 }, { mood: 'idle' }] } : null;
     case 'idle':

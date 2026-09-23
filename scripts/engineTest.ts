@@ -127,12 +127,12 @@ for (const difficulty of ['easy', 'medium', 'hard'] as const) {
     check(p.guests.length === { easy: 6, medium: 7, hard: 8 }[difficulty], 'neighbor guest count');
     check(new Set(p.guests.map(c => c.iso2)).size === p.guests.length, 'neighbor distinct guests');
     check(p.correct.every(id => p.guests.some(c => c.iso2 === id) && landNeighbors(p.host.iso2, difficulty !== 'easy').includes(id)), 'neighbor true choices');
-    check(p.guests.filter(c => !p.correct.includes(c.iso2)).every(c => !landNeighbors(p.host.iso2, difficulty !== 'easy').includes(c.iso2)), 'neighbor traps');
+    check(p.guests.filter(c => !p.correct.includes(c.iso2)).every(c => !landNeighbors(p.host.iso2, true).includes(c.iso2)), 'neighbor traps');
     check(difficulty !== 'easy' || p.host.tier === 1 && p.totalNeighbors >= 2 && p.totalNeighbors <= 5, 'neighbor easy pool');
   }
 }
 
-const { makePostPuzzle, reachableRoutes, travelOptions, postConstraintMet } = await import('../src/game/postPuzzles');
+const { makePostPuzzle, reachableRoutes, travelOptions, postConstraintMet, longerPostRoute } = await import('../src/game/postPuzzles');
 const { scorePost } = await import('../src/game/scoring');
 check(scorePost(4, 4, true, 0) === 125, 'post shortest bonus');
 check(scorePost(5, 4, false, 0) === 50, 'post constraint penalty');
@@ -154,6 +154,7 @@ for (const difficulty of ['easy', 'medium', 'hard'] as const) {
     check(possible.length > 0, 'post witness fits tickets');
     check(p.constraint !== 'two-continents' || postConstraintMet(p, p.shortest, []), 'post continent constraint');
     check(p.constraint !== 'no-air' || p.tickets.air === 0, 'post no-air tickets');
+    check(p.constraint !== 'shortest' || !!longerPostRoute(p.sender.iso2, p.receiver.iso2, p.tickets, p.shortest.length - 1, difficulty !== 'easy'), 'post shortest has detour');
   }
 }
 

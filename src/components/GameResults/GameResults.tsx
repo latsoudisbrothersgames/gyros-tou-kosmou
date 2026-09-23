@@ -49,7 +49,7 @@ export function GameResults({ state, onPlayAgain }: GameResultsProps) {
   const hiddenStops = state.answers.length - journeyStops.length;
   const uniqueVisited = new Set(state.answers.map((a) => a.countryId)).size;
   const discoveredIso2 = [
-    ...new Set(state.answers.filter((a) => a.discovered).map((a) => a.countryId)),
+    ...new Set(state.answers.flatMap((a) => a.discoveredIso2 ?? (a.discovered ? [a.countryId] : []))),
   ];
   const discoveredCountries = discoveredIso2
     .map((iso2) => getCountryByIsoCode(iso2))

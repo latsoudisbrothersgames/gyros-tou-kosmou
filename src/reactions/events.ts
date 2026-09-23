@@ -4,6 +4,10 @@ export type ReactionEvent =
   | { type: 'answer:wrong'; chosen: string; correct: string }
   | { type: 'timer:low'; secondsLeft: number }
   | { type: 'parade:miss'; iso2: string }
+  | { type: 'neighbors:open'; host: string; guests: string[] }
+  | { type: 'post:depart'; iso2: string }
+  | { type: 'post:deliver'; iso2: string }
+  | { type: 'puzzle:snap'; iso2: string; neighbors: string[] }
   | { type: 'idle'; seconds: number }
   | { type: 'game:end'; won: string[]; lost: string[] }
   | { type: 'country:open'; iso2: string }

@@ -18,13 +18,14 @@ export function useGeoSession<T>(config: GameConfig, makeRound: (index: number) 
   const complete = (countryId: string, correct: boolean, points: number, collect: string[] = []) => {
     if (locked.current || state.finished) return false;
     locked.current = true;
-    const discovered = correct && collect.map(addToCollection).some(Boolean);
+    const discoveredIso2 = correct ? collect.filter(addToCollection) : [];
+    const discovered = discoveredIso2.length > 0;
     const elapsed = performance.now() - started.current;
     setState(prev => ({ ...prev, score: prev.score + points,
       streak: correct ? prev.streak + 1 : 0,
       bestStreak: Math.max(prev.bestStreak, correct ? prev.streak + 1 : 0),
       answers: [...prev.answers, { questionId: `geo-${prev.questionIndex}`, countryId, correct,
-        pointsAwarded: points, timeMs: elapsed, discovered }] }));
+        pointsAwarded: points, timeMs: elapsed, discovered, discoveredIso2 }] }));
     setAnswered(true);
     playSound(correct ? 'correct' : 'wrong');
     vibrate(correct ? 35 : [25, 60, 25]);

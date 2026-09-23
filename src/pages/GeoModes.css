@@ -36,3 +36,17 @@
 .puzzle__joined { filter: drop-shadow(0 0 3px #ffcf5c); animation: puzzle-glow .7s ease-out; }
 @keyframes puzzle-glow { from { opacity: 0; stroke-width: 8; } to { opacity: 1; stroke-width: 4; } }
 @media (prefers-reduced-motion: reduce) { .puzzle__joined { animation: none; } }
+
+.post__nearby { text-align: left; margin: 10px 0; }
+.post__nearby > div { display: flex; gap: 6px; overflow-x: auto; padding: 6px 0; }
+.post__nearby button { flex: 0 0 auto; min-height: 44px; padding: 8px 10px; border: 2px solid #a7d4db; border-radius: 12px; background: white; font: inherit; font-size: .82rem; font-weight: 700; }
+
+.neighbors__table { display: flex; justify-content: center; align-items: center; gap: 3px; min-height: 68px; border-radius: 999px; background: #fff2d0; margin: 8px auto; }
+.neighbors__table > span { font-size: 2rem; }
+.neighbors__table .countryball { animation: neighbors-enter .45s ease-out both; }
+@keyframes neighbors-enter { from { transform: translateY(18px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+.neighbors__table--still .countryball { animation: none; }
+.post__delivery { display: flex; align-items: center; justify-content: center; gap: 10px; padding: 10px; border-radius: 14px; background: #fff2d0; }
+.post__delivery span { font-size: 2.5rem; }
+.puzzle__stage--still .puzzle__joined { animation: none; }
+@media (prefers-reduced-motion: reduce) { .neighbors__table .countryball { animation: none; } }

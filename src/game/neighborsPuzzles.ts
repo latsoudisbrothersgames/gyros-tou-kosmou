@@ -26,7 +26,7 @@ export function makeNeighborsPuzzle(difficulty: DifficultyId, focus?: string): N
     ...TRAVEL_LINKS.filter(l => l.a === host.iso2 || l.b === host.iso2).map(l => l.a === host.iso2 ? l.b : l.a),
   ]);
   const traps = shuffle(ALL_COUNTRIES.filter(c => c.iso2 !== host.iso2 && !SKIP.has(c.iso2)
-    && !real.includes(c.iso2) && (near.has(c.iso2) || c.continent === host.continent)));
+    && !BORDERS[host.iso2].includes(c.iso2) && (near.has(c.iso2) || c.continent === host.continent)));
   const guests = shuffle([...correct.map(id => getCountryByIsoCode(id)!), ...traps.slice(0, slots - correct.length)]);
   return { host, guests, correct, totalNeighbors: real.length };
 }

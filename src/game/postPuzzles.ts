@@ -11,7 +11,7 @@ export interface PostPuzzle {
   sender: Country; receiver: Country; tickets: Tickets; shortest: string[];
   constraint: 'none' | 'no-air' | 'two-continents' | 'shortest';
 }
-const SKIP = new Set(['xk', 'ps', 'tw', 'ma', 'mr']);
+export const POST_SKIP = new Set(['xk', 'ps', 'tw', 'ma', 'mr']);
 export function travelOptions(a: string, b: string, special = true): TicketKind[] {
   const result: TicketKind[] = [];
   if (landNeighbors(a, special).includes(b)) result.push('land');
@@ -36,7 +36,7 @@ export function reachableRoutes(start: string, tickets: Tickets, special = true)
       if (b) adjacent.set(b, [...(adjacent.get(b) ?? []), link.kind]);
     }
     for (const [b, options] of adjacent) {
-      if (SKIP.has(b) || node.path.includes(b)) continue;
+      if (POST_SKIP.has(b) || node.path.includes(b)) continue;
       for (const kind of options) {
         if (!node.left[kind]) continue;
         const left = { ...node.left, [kind]: node.left[kind] - 1 };
@@ -48,6 +48,26 @@ export function reachableRoutes(start: string, tickets: Tickets, special = true)
   }
   return result;
 }
+export function longerPostRoute(start: string, end: string, tickets: Tickets, minSteps: number, special = true):
+  { path: string[]; kinds: TicketKind[] } | null {
+  const max = Math.min(7, tickets.land + tickets.sea + tickets.air);
+  const search = (at: string, path: string[], kinds: TicketKind[], used: Tickets): { path: string[]; kinds: TicketKind[] } | null => {
+    if (at === end) return path.length - 1 > minSteps ? { path, kinds } : null;
+    if (path.length - 1 >= max) return null;
+    const adjacent = new Set([...landNeighbors(at, special),
+      ...TRAVEL_LINKS.filter(l => l.a === at || l.b === at).map(l => l.a === at ? l.b : l.a)]);
+    for (const next of adjacent) {
+      if (POST_SKIP.has(next) || path.includes(next)) continue;
+      for (const kind of travelOptions(at, next, special)) {
+        if (used[kind] >= tickets[kind]) continue;
+        const found = search(next, [...path, next], [...kinds, kind], { ...used, [kind]: used[kind] + 1 });
+        if (found) return found;
+      }
+    }
+    return null;
+  };
+  return search(start, [start], [], { land: 0, sea: 0, air: 0 });
+}
 export function makePostPuzzle(difficulty: DifficultyId, focus?: string, sequence = 0): PostPuzzle {
   const range = { easy: [2, 3], medium: [3, 5], hard: [4, 7] }[difficulty];
   const constraint: PostPuzzle['constraint'] = difficulty === 'easy' ? 'none'
@@ -55,17 +75,18 @@ export function makePostPuzzle(difficulty: DifficultyId, focus?: string, sequenc
   const tickets: Tickets = difficulty === 'easy' ? { land: 2, sea: 1, air: 0 }
     : difficulty === 'medium' ? { land: 3, sea: 2, air: constraint === 'no-air' ? 0 : 1 }
       : { land: 5, sea: 2, air: constraint === 'no-air' ? 0 : 1 };
-  const pool = shuffle(ALL_COUNTRIES.filter(c => !SKIP.has(c.iso2)));
+  const pool = shuffle(ALL_COUNTRIES.filter(c => !POST_SKIP.has(c.iso2)));
   if (focus) {
     const chosen = getCountryByIsoCode(focus);
-    if (chosen && !SKIP.has(focus)) pool.unshift(chosen);
+    if (chosen && !POST_SKIP.has(focus)) pool.unshift(chosen);
   }
   for (const sender of pool) {
     const routes = reachableRoutes(sender.iso2, tickets, difficulty !== 'easy');
     const candidates = shuffle(ALL_COUNTRIES.filter(c => {
       const path = routes.get(c.iso2);
       return path && path.length - 1 >= range[0] && path.length - 1 <= range[1]
-        && (constraint !== 'two-continents' || c.continent !== sender.continent);
+        && (constraint !== 'two-continents' || c.continent !== sender.continent)
+        && (constraint !== 'shortest' || !!longerPostRoute(sender.iso2, c.iso2, tickets, path.length - 1, difficulty !== 'easy'));
     }));
     if (candidates.length) {
       const receiver = candidates[0];

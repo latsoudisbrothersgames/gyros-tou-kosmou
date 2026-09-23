@@ -32,12 +32,15 @@ await withPreview(async ({ context, page }) => {
     ['ποιος είμαι', '/play/whoami?focus=jp', '.new-mode__round'],
     ['παρέλαση', '/play/parade?focus=jp', '.new-mode__round'],
     ['μεγαλύτερη', '/play/bigger?focus=jp', '.new-mode__round'],
+    ['γείτονες', '/play/neighbors?focus=gr', '.new-mode__round'],
+    ['ταχυδρομείο', '/play/post?focus=gr', '.new-mode__round'],
+    ['παζλ', '/play/puzzle?focus=gr', '.new-mode__round'],
   ];
   for (const [name, route, selector] of screens) {
     try {
       await page.goto(`${base}#${route}`);
       await page.locator(selector).first().waitFor();
-      await loadedFlag(page);
+      if (!route.startsWith('/play/neighbors') && !route.startsWith('/play/post') && !route.startsWith('/play/puzzle')) await loadedFlag(page);
       if (route === '/play/country') {
         const before = await page.locator('.question-card').getAttribute('data-question-id');
         await page.locator('.choice').first().click();
@@ -58,6 +61,25 @@ await withPreview(async ({ context, page }) => {
         await page.waitForFunction(previous => document.querySelector('.new-mode__round')?.dataset.round !== previous, before);
         await page.reload();
         await page.locator('.new-mode__round').waitFor();
+      }
+      if (route.startsWith('/play/neighbors')) {
+        await page.locator('.neighbors__guest').first().click();
+        assert.equal(await page.locator('.neighbors__guest[aria-pressed="true"]').count(), 1);
+      }
+      if (route.startsWith('/play/post')) {
+        await page.locator('.post__nearby button').first().click();
+        assert.ok((await page.locator('.post__route').innerText()).includes('→') || await page.locator('.post__ticket-choice').count() > 0);
+      }
+      if (route.startsWith('/play/puzzle')) {
+        const piece = page.locator('.puzzle__piece').first();
+        await piece.waitFor();
+        await piece.scrollIntoViewIfNeeded();
+        const box = await piece.boundingBox();
+        await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+        await page.mouse.down();
+        await page.mouse.move(box.x + box.width / 2 + 30, box.y + box.height / 2, { steps: 3 });
+        await page.mouse.up();
+        assert.match(await page.locator('.new-mode__round').innerText(), /Λάθος αποθέσεις: 1/);
       }
       if (route === '/map') await page.locator('.worldmap__country').first().waitFor();
       assert.deepEqual(errors, []);

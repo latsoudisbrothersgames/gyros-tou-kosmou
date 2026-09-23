@@ -14,7 +14,7 @@
     "test:engine": "node --import ./scripts/register_ts.mjs scripts/engineTest.ts",
     "test:data": "node --import ./scripts/register_ts.mjs scripts/validate.ts",
     "audit:dist": "node tools/audit_dist.mjs",
-    "probe:modes": "node tools/modes_probe.mjs",
+    "probe:modes": "node tools/modes_probe.mjs && node tools/geo_modes_probe.mjs",
     "test:markup": "node tools/modes_markup_test.mjs",
     "gen:borders": "node --import ./scripts/register_ts.mjs scripts/genBorders.ts"
   },

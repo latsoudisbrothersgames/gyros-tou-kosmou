@@ -42,6 +42,7 @@ const noFlag = ALL_COUNTRIES.filter(c=>!flagFiles.has(c.iso2)).map(c=>c.nameGree
 console.log('Countries with no flag file:', noFlag.join(', ') || 'none');
 
 
+import { ATLAS_PUZZLES } from '../src/data/puzzles';
 import { BORDERS, landNeighbors, borderKind } from '../src/data/borders';
 import { TRAVEL_LINKS } from '../src/data/links';
 import { SPECIAL_BORDERS } from '../src/data/borderOverrides';
@@ -83,6 +84,10 @@ exact('es', ['ad','fr','gb','ma','pt']);
 for (const edge of SPECIAL_BORDERS) {
   if (!BORDERS[edge.a]?.includes(edge.b) || !edge.noteGreek || !['overseas','exclave'].includes(edge.kind)) errs.push(`invalid special border ${edge.a}-${edge.b}`);
   if (landNeighbors(edge.a).includes(edge.b) || !borderKind(edge.a, edge.b)) errs.push(`special leaked into easy ${edge.a}-${edge.b}`);
+}
+for (const puzzle of ATLAS_PUZZLES) for (const iso of puzzle.countries) {
+  const country = ALL_COUNTRIES.find(c => c.iso2 === iso);
+  if (!country || !geoIds.has(country.isoNumeric)) errs.push(`puzzle without geometry ${puzzle.id}/${iso}`);
 }
 const sea = TRAVEL_LINKS.filter(link => link.kind === 'sea');
 const air = TRAVEL_LINKS.filter(link => link.kind === 'air');
