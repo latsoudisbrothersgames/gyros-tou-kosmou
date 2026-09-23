@@ -1,5 +1,6 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { BORDERS } from '../data/borders';
 import { ALL_COUNTRIES } from '../data/countries';
 import { CONTINENT_LABELS, type ContinentId } from '../types/country';
 import { continentVars } from '../theme/continents';
@@ -19,6 +20,9 @@ export function CollectionPage() {
   const reactions = useReactions();
   const collection = useMemo(() => loadCollection(), []);
   const [filter, setFilter] = useState<Filter>('all');
+  const [greeting, setGreeting] = useState<string | null>(null);
+  const greetingTimers = useRef<ReturnType<typeof setTimeout>[]>([]);
+  useEffect(() => () => greetingTimers.current.forEach(clearTimeout), []);
 
   const continents = useMemo(() => {
     const ids = new Set<ContinentId>();
@@ -31,6 +35,18 @@ export function CollectionPage() {
       filter === 'all' ? ALL_COUNTRIES : ALL_COUNTRIES.filter((c) => c.continent === filter);
     return [...list].sort((a, b) => a.nameGreek.localeCompare(b.nameGreek, 'el'));
   }, [filter]);
+
+  const tap = (iso2: string) => {
+    reactions?.emit({ type: 'collection:tap', iso2 });
+    greetingTimers.current.forEach(clearTimeout); greetingTimers.current = [];
+    setGreeting(null);
+    const index = countries.findIndex(c => c.iso2 === iso2);
+    const neighbor = [countries[index - 1], countries[index + 1]].find(c => c && collection.has(c.iso2) && BORDERS[iso2]?.includes(c.iso2));
+    if (neighbor) {
+      greetingTimers.current.push(setTimeout(() => setGreeting(iso2), 3000));
+      greetingTimers.current.push(setTimeout(() => setGreeting(null), 5800));
+    }
+  };
 
   const collectedCount = ALL_COUNTRIES.filter((c) => collection.has(c.iso2)).length;
 
@@ -83,9 +99,10 @@ export function CollectionPage() {
               style={continentVars(c.continent)}
             >
               <button type="button" className="collection__tap" aria-label={`Παίξε με τη φιγούρα: ${c.nameGreek}`}
-                onClick={() => reactions?.emit({ type: 'collection:tap', iso2: c.iso2 })}>
+                onClick={() => tap(c.iso2)}>
                 <CountryBall country={c} size={84} identityVisible />
               </button>
+              {greeting === c.iso2 && <span className="collection__neighbor" role="status">Γεια σου γείτονα!</span>}
               <Link to={`/country/${c.iso2}`} className="collection__name">{c.nameGreek}</Link>
             </div>
           ) : (

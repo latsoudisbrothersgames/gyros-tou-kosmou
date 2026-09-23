@@ -109,3 +109,6 @@
 }
 
 .collection__tap { border: 0; background: transparent; cursor: pointer; padding: 0; }
+
+.collection__tap { border: 0; background: transparent; padding: 0; min-width: 84px; min-height: 84px; cursor: pointer; }
+.collection__neighbor { font-size: .7rem; color: var(--ocean-900); text-align: center; }
