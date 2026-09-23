@@ -8,13 +8,13 @@ const initial = (config: GameConfig): SessionState => ({ config, questionIndex: 
   streak: 0, bestStreak: 0, answers: [], finished: false });
 
 /** Κοινή συνεδρία για γύρους με πολλές σωστές επιλογές ή κινήσεις. */
-export function useGeoSession<T>(config: GameConfig, makeRound: (index: number) => T) {
+export function useGeoSession<T>(config: GameConfig, makeRound: (index: number) => T, totalOverride?: number | null) {
   const [round, setRound] = useState(() => makeRound(0));
   const [state, setState] = useState(() => initial(config));
   const [answered, setAnswered] = useState(false);
   const locked = useRef(false);
   const started = useRef(performance.now());
-  const total = config.length === 'endless' ? null : config.length;
+  const total = totalOverride === undefined ? config.length === 'endless' ? null : config.length : totalOverride;
   const complete = (countryId: string, correct: boolean, points: number, collect: string[] = []) => {
     if (locked.current || state.finished) return false;
     locked.current = true;

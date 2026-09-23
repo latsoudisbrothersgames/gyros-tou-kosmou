@@ -68,3 +68,11 @@ export function scorePost(stepsUsed: number, minSteps: number, constraintMet: bo
     + Math.min(Math.max(0, streak), MAX_STREAK_BONUS_STEPS) * STREAK_BONUS_PER_STEP;
   return constraintMet ? total : Math.floor(total / 2);
 }
+
+/** Χρόνος 0–120 s: έως 50 μπόνους, 5 ανά λανθασμένη απόθεση, ελάχιστο 25. */
+export function scorePuzzle(pieces: number, misdrops: number, seconds: number, streak: number): number {
+  if (pieces < 1) return 0;
+  const timeBonus = Math.round(50 * Math.max(0, 1 - Math.max(0, seconds) / 120));
+  return Math.max(25, 100 + timeBonus - 5 * Math.max(0, misdrops)
+    + Math.min(Math.max(0, streak), MAX_STREAK_BONUS_STEPS) * STREAK_BONUS_PER_STEP);
+}

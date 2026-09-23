@@ -28,3 +28,11 @@
 .post__ticket-choice button { min-height: 44px; padding: 8px 14px; border: 2px solid #167e9c; border-radius: 12px; background: white; font: inherit; font-weight: 800; }
 @keyframes post-motion { from { offset-distance: 0%; } to { offset-distance: 100%; } }
 @media (prefers-reduced-motion: reduce) { .regional-map circle[style*="offset-path"] { animation: none !important; } }
+
+.puzzle__stage { display: block; width: 100%; max-width: 450px; margin: 12px auto; height: auto; }
+.puzzle__piece { touch-action: none; cursor: grab; }
+.puzzle__piece--active { cursor: grabbing; }
+.puzzle__piece--placed { pointer-events: none; }
+.puzzle__joined { filter: drop-shadow(0 0 3px #ffcf5c); animation: puzzle-glow .7s ease-out; }
+@keyframes puzzle-glow { from { opacity: 0; stroke-width: 8; } to { opacity: 1; stroke-width: 4; } }
+@media (prefers-reduced-motion: reduce) { .puzzle__joined { animation: none; } }

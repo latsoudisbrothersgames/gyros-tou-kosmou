@@ -156,5 +156,18 @@ for (const difficulty of ['easy', 'medium', 'hard'] as const) {
     check(p.constraint !== 'no-air' || p.tickets.air === 0, 'post no-air tickets');
   }
 }
+
+const { ATLAS_PUZZLES, puzzleForRound } = await import('../src/data/puzzles');
+const { scorePuzzle } = await import('../src/game/scoring');
+check(ATLAS_PUZZLES.length >= 12, 'at least twelve atlas puzzles');
+for (const puzzle of ATLAS_PUZZLES) {
+  check(puzzle.countries.length >= 4 && puzzle.countries.length <= 8, `puzzle size ${puzzle.id}`);
+  check(new Set(puzzle.countries).size === puzzle.countries.length, `puzzle distinct pieces ${puzzle.id}`);
+  check(puzzle.countries.every(id => ALL_COUNTRIES.some(c => c.iso2 === id) && !['xk','ps','tw','ma','mr'].includes(id)), `puzzle countries ${puzzle.id}`);
+}
+check(puzzleForRound(0, 'gr').id === 'balkans', 'puzzle focus');
+check(scorePuzzle(4, 0, 0, 0) === 150, 'puzzle time bonus');
+check(scorePuzzle(5, 30, 200, 0) === 25, 'puzzle floor');
+check(scorePuzzle(6, 1, 120, 2) === 115, 'puzzle misdrop and streak');
 console.log(fails === 0 ? 'ENGINE OK' : `${fails} failures`);
 process.exit(fails ? 1 : 0);
