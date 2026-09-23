@@ -6,6 +6,7 @@ import { useBallReaction } from '../../reactions/useBallReaction';
 import type { BallMood } from '../../reactions/events';
 export type { BallMood } from '../../reactions/events';
 import { SpeechBubble } from '../SpeechBubble/SpeechBubble';
+import { useSettings } from '../../context/SettingsContext';
 import { countryFact, countryGreeting, pickBallLine } from '../../data/ballLines';
 import './CountryBall.css';
 
@@ -82,7 +83,7 @@ function characterFor(iso2: string): BallCharacter {
     floatDur: rand(3.6, 5.6),
     tiltDur: rand(4.8, 7.2),
     tiltDeg: rand(1.6, 3.6),
-    blinkDur: rand(3.2, 5.2),
+    blinkDur: rand(3, 7),
     delay: rand(0, 2),
   };
 }
@@ -145,18 +146,42 @@ export function CountryBall({
   const rootRef = useRef<HTMLDivElement>(null);
   const reactions = useReactions();
   const [live, setLive] = useState(false);
+  const [microMood, setMicroMood] = useState<BallMood | null>(null);
+  const { settings } = useSettings();
   useEffect(() => {
     const element = rootRef.current;
     if (element && reactions) return reactions.registerBall(element, setLive);
   }, [reactions]);
   const identity = identityVisible && !concealed;
   const reaction = useBallReaction(country.iso2, live && reactive && !concealed && explicitMood === undefined);
-  const mood = explicitMood ?? reaction.mood;
   const uid = useId().replace(/[^a-zA-Z0-9]/g, '');
+  const mood = explicitMood ?? (reaction.mood !== 'idle' ? reaction.mood : microMood ?? 'idle');
+  useEffect(() => {
+    if (!live || explicitMood !== undefined || settings.reducedMotion || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const rand = makeSeededRandom(uid);
+    let timer: ReturnType<typeof setTimeout>;
+    let end: ReturnType<typeof setTimeout>;
+    let cancelled = false;
+    const cycle = () => {
+      const choice = rand(0, 1);
+      const next: BallMood | null = choice < .48 ? null : choice < .76 ? 'curious' : choice < .92 ? 'sleepy' : 'surprised';
+      if (next === null) {
+        const root = rootRef.current;
+        root?.style.setProperty('--cb-look-x', `${rand(-2, 2).toFixed(1)}px`);
+        end = setTimeout(() => root?.style.setProperty('--cb-look-x', '0px'), 900);
+      } else {
+        setMicroMood(next);
+        end = setTimeout(() => { if (!cancelled) setMicroMood(null); }, next === 'sleepy' ? 1400 : 650);
+      }
+      timer = setTimeout(cycle, rand(8000, 12000));
+    };
+    timer = setTimeout(cycle, rand(8000, 12000));
+    return () => { cancelled = true; clearTimeout(timer); clearTimeout(end); };
+  }, [live, explicitMood, settings.reducedMotion, uid]);
   const flagUrl = concealed ? undefined : getFlagUrl(country.iso2);
   const clipId = `cb-clip-${uid}`;
   const shadeId = `cb-shade-${uid}`;
-  const ch = characterFor(identity ? country.iso2 : 'xx');
+  const ch = characterFor(identity ? country.iso2 : uid);
   const delay = animationDelay ?? `${ch.delay.toFixed(2)}s`;
   const moodClass = `countryball--${mood}`;
   const mouthKind = ['surprised', 'sleepy', 'nervous', 'confused', 'dizzy'].includes(mood) ? 2
