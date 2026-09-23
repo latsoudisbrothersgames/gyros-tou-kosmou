@@ -17,6 +17,7 @@ import { EncyclopediaPage } from './pages/EncyclopediaPage';
 import { CountryPage } from './pages/CountryPage';
 import { ScoreboardPage } from './pages/ScoreboardPage';
 import { CollectionPage } from './pages/CollectionPage';
+import { YardPage } from './pages/YardPage';
 
 // Οι σελίδες χάρτη φορτώνονται «τεμπέλικα» (φέρνουν το TopoJSON ~750KB)
 const WorldMapPage = lazy(() =>
@@ -70,6 +71,7 @@ export default function App() {
                   <Route path="/country/:iso2" element={<CountryPage />} />
                   <Route path="/scoreboard" element={<ScoreboardPage />} />
                   <Route path="/collection" element={<CollectionPage />} />
+                  <Route path="/yard" element={<YardPage />} />
                   <Route path="*" element={<HomePage />} />
                 </Routes>
               </Suspense>

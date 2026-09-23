@@ -1,0 +1,10 @@
+.yard { padding-bottom: 2rem; }
+.yard__back { display: inline-flex; min-height: 44px; align-items: center; margin-bottom: 1rem; }
+.yard__stage { position: relative; height: min(62vh, 540px); min-height: 380px; width: 100%; overflow: hidden; border: 3px solid #97cfa6; border-radius: 26px; background: radial-gradient(circle at 20% 20%, #effbe7, #d3ebcf); }
+.yard__friend { position: absolute; left: 0; top: 0; width: 78px; display: flex; flex-direction: column; align-items: center; touch-action: none; user-select: none; cursor: grab; will-change: transform; }
+.yard__friend:active { cursor: grabbing; }
+.yard__friend:focus-visible { outline: 3px solid var(--ocean-500); border-radius: 12px; }
+.yard__name { max-width: 78px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: .65rem; font-weight: 700; color: #21472b; background: #ffffffbb; border-radius: 6px; padding: 1px 3px; }
+.yard__empty { padding: 3rem 1rem; text-align: center; border-radius: 22px; background: #e6f5e6; font-size: 1.2rem; }
+.yard__stage--still { display: grid; grid-template-columns: repeat(auto-fit, minmax(78px, 1fr)); align-content: center; justify-items: center; gap: 1.4rem .5rem; padding: 1rem; height: auto; min-height: 380px; }
+.yard__stage--still .yard__friend { position: static; transform: none !important; will-change: auto; touch-action: manipulation; }

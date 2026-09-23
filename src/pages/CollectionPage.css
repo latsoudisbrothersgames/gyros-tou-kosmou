@@ -112,3 +112,5 @@
 
 .collection__tap { border: 0; background: transparent; padding: 0; min-width: 84px; min-height: 84px; cursor: pointer; }
 .collection__neighbor { font-size: .7rem; color: var(--ocean-900); text-align: center; }
+
+.collection__yard { display: flex; align-items: center; justify-content: center; min-height: 44px; margin: 0 auto 1rem; font-weight: 700; }

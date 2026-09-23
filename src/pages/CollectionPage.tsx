@@ -67,6 +67,8 @@ export function CollectionPage() {
         />
       </div>
 
+      <Link className="collection__yard" to="/yard">Η αυλή των CountryBalls →</Link>
+
       <div className="collection__filters">
         <button
           type="button"
