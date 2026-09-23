@@ -11,6 +11,7 @@
     "probe:offline": "node tools/offline_probe.mjs",
     "test:reactions": "node --import ./scripts/register_ts.mjs scripts/reactionsTest.ts",
     "probe:balls": "node tools/balls_probe.mjs",
+    "probe:fix-round": "node tools/fix_round_probe.mjs",
     "test:engine": "node --import ./scripts/register_ts.mjs scripts/engineTest.ts",
     "test:data": "node --import ./scripts/register_ts.mjs scripts/validate.ts",
     "audit:dist": "node tools/audit_dist.mjs",

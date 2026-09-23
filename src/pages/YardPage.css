@@ -1,10 +1,15 @@
-.yard { padding-bottom: 2rem; }
-.yard__back { display: inline-flex; min-height: 44px; align-items: center; margin-bottom: 1rem; }
-.yard__stage { position: relative; height: min(62vh, 540px); min-height: 380px; width: 100%; overflow: hidden; border: 3px solid #97cfa6; border-radius: 26px; background: radial-gradient(circle at 20% 20%, #effbe7, #d3ebcf); }
-.yard__friend { position: absolute; left: 0; top: 0; width: 78px; display: flex; flex-direction: column; align-items: center; touch-action: none; user-select: none; cursor: grab; will-change: transform; }
+.yard { min-height: calc(100dvh - 108px); display: flex; flex-direction: column; padding-bottom: .5rem; }
+.yard .page-title { font-size: clamp(1.45rem, 5.3vw, 2rem); line-height: 1.15; margin-bottom: .5rem; }
+.yard .page-subtitle { margin-bottom: .65rem; font-size: .9rem; }
+.yard__controls { display: flex; align-items: center; justify-content: space-between; gap: .7rem; margin-bottom: .65rem; }
+.yard__back, .yard__invite { display: inline-flex; min-height: 44px; align-items: center; }
+.yard__invite { border: 2px solid #548e69; border-radius: 999px; background: #e8f8e6; color: #21472b; font: inherit; font-weight: 750; padding: .35rem .8rem; cursor: pointer; }
+.yard__stage { position: relative; flex: 1; min-height: 390px; width: 100%; overflow: hidden; border: 3px solid #97cfa6; border-radius: 26px; background: radial-gradient(circle at 20% 20%, #effbe7, #d3ebcf); touch-action: manipulation; }
+.yard__friend { position: absolute; left: 0; top: 0; width: 86px; display: flex; flex-direction: column; align-items: center; touch-action: none; user-select: none; cursor: grab; will-change: transform; }
 .yard__friend:active { cursor: grabbing; }
 .yard__friend:focus-visible { outline: 3px solid var(--ocean-500); border-radius: 12px; }
-.yard__name { max-width: 78px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: .65rem; font-weight: 700; color: #21472b; background: #ffffffbb; border-radius: 6px; padding: 1px 3px; }
+.yard__name { max-width: 86px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: .68rem; font-weight: 700; color: #21472b; background: #ffffffbb; border-radius: 6px; padding: 1px 3px; }
 .yard__empty { padding: 3rem 1rem; text-align: center; border-radius: 22px; background: #e6f5e6; font-size: 1.2rem; }
-.yard__stage--still { display: grid; grid-template-columns: repeat(auto-fit, minmax(78px, 1fr)); align-content: center; justify-items: center; gap: 1.4rem .5rem; padding: 1rem; height: auto; min-height: 380px; }
+.yard__stage--still { display: grid; grid-template-columns: repeat(auto-fit, minmax(86px, 1fr)); align-content: center; justify-items: center; gap: 1.4rem .5rem; padding: 1rem; min-height: 390px; }
 .yard__stage--still .yard__friend { position: static; transform: none !important; will-change: auto; touch-action: manipulation; }
+@media (max-width: 390px) { .yard__controls { font-size: .83rem; } .yard__invite { padding-inline: .55rem; } }
