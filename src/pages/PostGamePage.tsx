@@ -74,7 +74,7 @@ function PostRound({ session: s }: { session: ReturnType<typeof useGeoSession<Re
     const met = postConstraintMet(p, route, kinds);
     const finish = () => {
       s.complete(p.receiver.iso2, true, scorePost(route.length - 1, p.shortest.length - 1, met, s.state.streak), route);
-      setMessage(met ? `Το δέμα έφτασε! ${p.receiver.factsGreek[0]}` : 'Το δέμα έφτασε, αλλά ο περιορισμός δεν τηρήθηκε.');
+      setMessage(met ? 'Το δέμα έφτασε!' : 'Το δέμα έφτασε, αλλά ο περιορισμός δεν τηρήθηκε.');
       playSound('delivery'); reactions?.emit({ type: 'post:deliver', iso2: p.receiver.iso2 }); setMoving(false);
     };
     if (reduced) finish(); else {
@@ -111,8 +111,8 @@ function PostRound({ session: s }: { session: ReturnType<typeof useGeoSession<Re
     <p role="status">{message}</p>
     {invalid && <div className="geo-mode__bubble"><SpeechBubble key={message} lines={[message]} audible={false} /></div>}
     {pending && <div className="post__ticket-choice">{pending.options.map(kind => <button key={kind} onClick={() => advance(pending.id, kind)}>{labels[kind]} {kind === 'land' ? 'Στεριά' : kind === 'sea' ? 'Θάλασσα' : 'Αέρας'}</button>)}</div>}
-    <div className="post__actions"><Button variant="secondary" disabled={route.length <= 1 || s.answered} onClick={undo}>Αναίρεση</Button>
-      {!s.answered && <Button disabled={current !== p.receiver.iso2 || moving} onClick={depart}>{moving ? 'Ταξιδεύει…' : 'Αναχώρηση'}</Button>}</div>
+    {!s.answered && <div className="post__actions"><Button variant="secondary" disabled={route.length <= 1 || moving} onClick={undo}>Αναίρεση</Button>
+      <Button disabled={current !== p.receiver.iso2 || moving} onClick={depart}>{moving ? 'Ταξιδεύει…' : 'Αναχώρηση'}</Button></div>}
     {s.answered && <div className="post__delivery"><span aria-hidden="true">🎁</span><p>{p.receiver.factsGreek[0]}</p></div>}
     {s.answered && <p>Η διαδρομή σου: {route.length - 1} στάσεις · Η πιο σύντομη: {p.shortest.length - 1}</p>}
   </>;

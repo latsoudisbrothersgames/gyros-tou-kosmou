@@ -73,18 +73,20 @@ export function makePostPuzzle(difficulty: DifficultyId, focus?: string, sequenc
   const constraint: PostPuzzle['constraint'] = difficulty === 'easy' ? 'none'
     : (['no-air', 'two-continents', 'shortest'] as const)[sequence % 3];
   const tickets: Tickets = difficulty === 'easy' ? { land: 2, sea: 1, air: 0 }
-    : difficulty === 'medium' ? { land: 3, sea: 2, air: constraint === 'no-air' ? 0 : 1 }
-      : { land: 5, sea: 2, air: constraint === 'no-air' ? 0 : 1 };
+    : difficulty === 'medium' ? { land: 3, sea: 2, air: 1 }
+      : { land: 5, sea: 2, air: 1 };
   const pool = shuffle(ALL_COUNTRIES.filter(c => !POST_SKIP.has(c.iso2)));
   if (focus) {
     const chosen = getCountryByIsoCode(focus);
     if (chosen && !POST_SKIP.has(focus)) pool.unshift(chosen);
   }
   for (const sender of pool) {
-    const routes = reachableRoutes(sender.iso2, tickets, difficulty !== 'easy');
+    const routes = reachableRoutes(sender.iso2, constraint === 'no-air' ? { ...tickets, air: 0 } : tickets, difficulty !== 'easy');
+    const unrestricted = constraint === 'no-air' ? reachableRoutes(sender.iso2, tickets, true) : routes;
     const candidates = shuffle(ALL_COUNTRIES.filter(c => {
       const path = routes.get(c.iso2);
       return path && path.length - 1 >= range[0] && path.length - 1 <= range[1]
+        && (constraint !== 'no-air' || unrestricted.get(c.iso2)?.length === path.length)
         && (constraint !== 'two-continents' || c.continent !== sender.continent)
         && (constraint !== 'shortest' || !!longerPostRoute(sender.iso2, c.iso2, tickets, path.length - 1, difficulty !== 'easy'));
     }));

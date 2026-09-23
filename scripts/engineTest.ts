@@ -116,7 +116,7 @@ check(!validComparison({ ...a, population: 114 }, { ...b, population: 100 }, 'po
 check(validComparison({ ...a, population: 115 }, { ...b, population: 100 }, 'population', 'hard'), '15 percent boundary included');
 
 const { makeNeighborsPuzzle, rankedNeighborTraps } = await import('../src/game/neighborsPuzzles');
-const { landNeighbors } = await import('../src/data/borders');
+const { landNeighbors, borderKind } = await import('../src/data/borders');
 const { scoreNeighbors } = await import('../src/game/scoring');
 check(scoreNeighbors(4, 0, 0, 0) === 100, 'neighbors perfect');
 check(scoreNeighbors(4, 0, 0, 3) === 130, 'neighbors streak');
@@ -160,7 +160,9 @@ for (const difficulty of ['easy', 'medium', 'hard'] as const) {
     }
     check(possible.length > 0, 'post witness fits tickets');
     check(p.constraint !== 'two-continents' || postConstraintMet(p, p.shortest, []), 'post continent constraint');
-    check(p.constraint !== 'no-air' || p.tickets.air === 0, 'post no-air tickets');
+    check(p.constraint !== 'no-air' || p.tickets.air > 0 && p.shortest.every((id, step) =>
+      step === 0 || travelOptions(p.shortest[step - 1], id).some(kind => kind !== 'air')), 'post no-air is meaningful and solvable');
+    check(difficulty !== 'easy' || p.shortest.every((id, step) => step === 0 || !borderKind(p.shortest[step - 1], id)), 'easy post avoids special borders');
     check(p.constraint !== 'shortest' || !!longerPostRoute(p.sender.iso2, p.receiver.iso2, p.tickets, p.shortest.length - 1, difficulty !== 'easy'), 'post shortest has detour');
   }
 }
