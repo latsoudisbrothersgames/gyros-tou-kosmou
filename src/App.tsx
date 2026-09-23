@@ -8,6 +8,7 @@ import { GamesPage } from './pages/GamesPage';
 import { QuizGamePage } from './pages/QuizGamePage';
 import { BiggerGamePage } from './pages/BiggerGamePage';
 import { ParadeGamePage } from './pages/ParadeGamePage';
+import { PostGamePage } from './pages/PostGamePage';
 import { NeighborsGamePage } from './pages/NeighborsGamePage';
 import { WhoAmIGamePage } from './pages/WhoAmIGamePage';
 import { ScratchGamePage } from './pages/ScratchGamePage';
@@ -57,6 +58,7 @@ export default function App() {
                   <Route path="/play/map" element={<MapGamePage />} />
                   <Route path="/play/bigger" element={<BiggerGamePage />} />
                   <Route path="/play/parade" element={<ParadeGamePage />} />
+                  <Route path="/play/post" element={<PostGamePage />} />
                   <Route path="/play/neighbors" element={<NeighborsGamePage />} />
                   <Route path="/play/whoami" element={<WhoAmIGamePage />} />
                   <Route path="/play/scratch" element={<ScratchGamePage />} />

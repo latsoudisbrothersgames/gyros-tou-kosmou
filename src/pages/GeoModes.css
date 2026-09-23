@@ -17,3 +17,14 @@
 .geo-mode__bubble { position: relative; height: 90px; margin-top: 90px; }
 .geo-mode__bubble .speech-bubble { bottom: 0; }
 @media (max-width: 390px) { .neighbors__guest { font-size: .72rem; } }
+
+.post__constraint { display: inline-block; margin: 8px auto; padding: 8px 12px; border-radius: 12px; background: #fff2c7; font-weight: 800; }
+.post__characters { display: flex; align-items: center; justify-content: center; gap: 18px; }
+.post__characters > span { font-size: 2.2rem; }
+.post__tickets { display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; margin: 8px 0; }
+.post__tickets span { min-width: 75px; padding: 7px; border: 2px solid #a7d4db; border-radius: 12px; background: #e6f5fa; font-weight: 800; }
+.post__route { overflow-wrap: anywhere; font-size: .85rem; }
+.post__actions, .post__ticket-choice { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; }
+.post__ticket-choice button { min-height: 44px; padding: 8px 14px; border: 2px solid #167e9c; border-radius: 12px; background: white; font: inherit; font-weight: 800; }
+@keyframes post-motion { from { offset-distance: 0%; } to { offset-distance: 100%; } }
+@media (prefers-reduced-motion: reduce) { .regional-map circle[style*="offset-path"] { animation: none !important; } }

@@ -131,5 +131,30 @@ for (const difficulty of ['easy', 'medium', 'hard'] as const) {
     check(difficulty !== 'easy' || p.host.tier === 1 && p.totalNeighbors >= 2 && p.totalNeighbors <= 5, 'neighbor easy pool');
   }
 }
+
+const { makePostPuzzle, reachableRoutes, travelOptions, postConstraintMet } = await import('../src/game/postPuzzles');
+const { scorePost } = await import('../src/game/scoring');
+check(scorePost(4, 4, true, 0) === 125, 'post shortest bonus');
+check(scorePost(5, 4, false, 0) === 50, 'post constraint penalty');
+check(scorePost(4, 4, true, 3) === 155, 'post streak bonus');
+for (const difficulty of ['easy', 'medium', 'hard'] as const) {
+  const range = { easy: [2, 3], medium: [3, 5], hard: [4, 7] }[difficulty];
+  for (let i = 0; i < 100; i++) {
+    const p = makePostPuzzle(difficulty, undefined, i);
+    const min = reachableRoutes(p.sender.iso2, p.tickets, difficulty !== 'easy').get(p.receiver.iso2);
+    check(!!min && min.length === p.shortest.length, 'post BFS shortest');
+    check(p.shortest.length - 1 >= range[0] && p.shortest.length - 1 <= range[1], 'post range');
+    check(p.shortest[0] === p.sender.iso2 && p.shortest.at(-1) === p.receiver.iso2, 'post endpoints');
+    let possible = [{ land: 0, sea: 0, air: 0 }];
+    for (let j = 1; j < p.shortest.length; j++) {
+      const kinds = travelOptions(p.shortest[j - 1], p.shortest[j], difficulty !== 'easy');
+      possible = possible.flatMap(counts => kinds.map(kind => ({ ...counts, [kind]: counts[kind] + 1 })))
+        .filter(counts => counts.land <= p.tickets.land && counts.sea <= p.tickets.sea && counts.air <= p.tickets.air);
+    }
+    check(possible.length > 0, 'post witness fits tickets');
+    check(p.constraint !== 'two-continents' || postConstraintMet(p, p.shortest, []), 'post continent constraint');
+    check(p.constraint !== 'no-air' || p.tickets.air === 0, 'post no-air tickets');
+  }
+}
 console.log(fails === 0 ? 'ENGINE OK' : `${fails} failures`);
 process.exit(fails ? 1 : 0);

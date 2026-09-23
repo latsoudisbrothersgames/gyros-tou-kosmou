@@ -7,10 +7,10 @@ import { useWorldTopology } from '../WorldMap/useWorldTopology';
 
 interface Props {
   iso2s: string[]; host?: string; revealed?: boolean; highlighted?: string[];
-  route?: string[]; onCountry?: (iso2: string) => void; minTouch?: boolean;
+  route?: string[]; travelRoute?: string[]; moving?: boolean; onCountry?: (iso2: string) => void; minTouch?: boolean;
 }
 /** Μικρός χάρτης από την ήδη φορτωμένη τοπολογία. Δεν αποδίδει απαντήσεις πριν το reveal. */
-export function RegionalMap({ iso2s, host, revealed = false, highlighted = [], route, onCountry, minTouch = false }: Props) {
+export function RegionalMap({ iso2s, host, revealed = false, highlighted = [], route, travelRoute, moving = false, onCountry, minTouch = false }: Props) {
   const { topology } = useWorldTopology();
   const map = useMemo(() => {
     if (!topology) return null;
@@ -34,19 +34,23 @@ export function RegionalMap({ iso2s, host, revealed = false, highlighted = [], r
   }, [topology, iso2s, host, revealed, highlighted]);
   if (!map) return <div className="regional-map regional-map--loading">Ο χάρτης φορτώνει…</div>;
   const routePoints = revealed && route ? route.map(map.getCenter).filter((p): p is [number, number] => !!p && Number.isFinite(p[0])) : [];
+  const travelPoints = travelRoute ? travelRoute.map(map.getCenter).filter((p): p is [number, number] => !!p && Number.isFinite(p[0])) : [];
+  const motionPath = travelPoints.length > 1 ? 'M' + travelPoints.map(p => p.join(' ')).join(' L') : '';
   return <svg className="regional-map" viewBox="0 0 360 220" role="img" aria-label="Περιφερειακός χάρτης χωρίς ονόματα">
     <rect width="360" height="220" rx="16" fill="#e6f5fa" />
     {map.visible.map(c => <path key={c.isoNumeric} d={c.d!} fill={c.iso2 === host ? '#ffdc80' : '#d4e8ce'}
       stroke={revealed ? '#9ab7a5' : 'none'} strokeWidth=".45" />)}
     {map.borderPath && <path d={map.borderPath} fill="none" stroke="#f06049" strokeWidth="3" />}
     {routePoints.length > 1 && <polyline points={routePoints.map(p => p.join(',')).join(' ')} fill="none" stroke="#eb8e56" strokeWidth="2" strokeDasharray="5 5" />}
+    {travelPoints.length > 1 && <polyline points={travelPoints.map(p => p.join(',')).join(' ')} fill="none" stroke="#167e9c" strokeWidth="3" />}
+    {moving && motionPath && <circle r="7" fill="#e56536" style={{ offsetPath: `path('${motionPath}')`, animation: `post-motion ${travelPoints.length * .65}s linear both` }} />}
     {onCountry && map.visible.filter(c => c.iso2).map(c => {
       const center = map.getCenter(c.iso2!);
       if (!center || !Number.isFinite(center[0])) return null;
       return <g key={`tap-${c.iso2}`} onClick={() => onCountry(c.iso2!)} role="button" tabIndex={0}
         onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') onCountry(c.iso2!); }} aria-label={c.nameGreek}>
         <path d={c.d!} fill="transparent" stroke="none" />
-        {minTouch && <circle cx={center[0]} cy={center[1]} r="22" fill="transparent" />}
+        {minTouch && (() => { const [[x0, y0], [x1, y1]] = map.path.bounds(c.feature); return x1 - x0 < 44 || y1 - y0 < 44 ? <circle cx={center[0]} cy={center[1]} r="24" fill="transparent" /> : null; })()}
       </g>;
     })}
   </svg>;

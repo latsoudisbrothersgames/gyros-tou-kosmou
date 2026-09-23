@@ -61,3 +61,10 @@ export function scoreNeighbors(correctPicked: number, missed: number, wrongPicke
   if (perfect) return 100 + Math.min(streak, MAX_STREAK_BONUS_STEPS) * STREAK_BONUS_PER_STEP;
   return Math.max(0, Math.round(100 * (total ? correctPicked / total : 0) - 20 * wrongPicked));
 }
+
+/** Παράδοση: σταθερή βάση, μπόνους συντομίας και σερί· μισοί πόντοι αν χαθεί ο περιορισμός. */
+export function scorePost(stepsUsed: number, minSteps: number, constraintMet: boolean, streak: number): number {
+  const total = 100 + (stepsUsed === minSteps ? 25 : 0)
+    + Math.min(Math.max(0, streak), MAX_STREAK_BONUS_STEPS) * STREAK_BONUS_PER_STEP;
+  return constraintMet ? total : Math.floor(total / 2);
+}
