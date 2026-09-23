@@ -96,8 +96,8 @@ function PostRound({ session: s }: { session: ReturnType<typeof useGeoSession<Re
     <h1>Το ταχυδρομείο των CountryBalls</h1>
     <p>{subject} {p.sender.nameGreek} στέλνει δέμα {destination(p.receiver.nameGreekAccusative)}.</p>
     {p.constraint !== 'none' && <p className="post__constraint">{constraints[p.constraint]}</p>}
-    <div className="post__characters"><CountryBall country={p.sender} size={58} reactive={false} speechEnabled={false} mood={invalid ? 'thinking' : moving ? 'proud' : 'idle'} />
-      <span aria-hidden="true">📦</span><CountryBall country={p.receiver} size={58} reactive={false} speechEnabled={false} /></div>
+    <div className="post__characters"><CountryBall country={p.sender} size={58} identityVisible={s.answered} reactive={false} speechEnabled={false} mood={invalid ? 'thinking' : moving ? 'proud' : 'idle'} />
+      <span aria-hidden="true">📦</span><CountryBall country={p.receiver} size={58} identityVisible={s.answered} reactive={false} speechEnabled={false} /></div>
     <div className="post__tickets">{(['land', 'sea', 'air'] as const).map(kind =>
       <span key={kind}>{labels[kind]} × {p.tickets[kind] - used[kind]}</span>)}</div>
     <RegionalMap iso2s={visible} frameIso2s={frame} host={mapCurrent} onCountry={select} minTouch

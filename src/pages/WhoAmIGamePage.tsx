@@ -30,7 +30,7 @@ function MysteryRound({ session: s }: { session: ReturnType<typeof useNewModeSes
     <div className="mystery__stage">
       <div className="mystery__speaker">
         <SpeechBubble key={answered ? 'reveal' : hints} lines={[answered ? reveal : hints ? lines[hints - 1] : 'Μπορείς να με βρεις;']} />
-        <CountryBall country={s.round.country} size={128} concealed={!answered} reactive={false}
+        <CountryBall country={s.round.country} size={128} identityVisible={answered} concealed={!answered} reactive={false}
           className={answered ? 'new-mode__reveal' : ''}
           mood={!answered ? 'thinking' : correct ? (s.state.streak >= 3 ? 'dance' : 'celebrate') : 'wave'} />
       </div>
@@ -43,7 +43,7 @@ function MysteryRound({ session: s }: { session: ReturnType<typeof useNewModeSes
       {s.round.choices.map(country => <button type="button" key={country.iso2} data-choice={country.iso2}
         disabled={answered} className={`new-mode__choice ${answered && country.iso2 === s.round.country.iso2 ? 'new-mode__choice--correct' : answered && country.iso2 === s.selected ? 'new-mode__choice--wrong' : ''}`}
         onClick={() => s.answer(country.iso2, streak => scoreWithHints(hints, streak))}>
-        {answered && <CountryBall country={country} size={40} speechEnabled={false} />}
+        {answered && <CountryBall country={country} size={40} identityVisible={answered} speechEnabled={false} />}
         <span>{country.nameGreek}</span>
       </button>)}
     </div>

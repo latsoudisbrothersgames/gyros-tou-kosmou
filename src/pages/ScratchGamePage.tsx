@@ -248,7 +248,7 @@ function ScratchSession({ config }: { config: GameConfig }) {
         <div className="scratch__feedback" role="status" aria-live="assertive">
           {country && (
             <CountryBall
-              country={country}
+              country={country} identityVisible
               size={92}
               mood={answeredCorrectly ? (state.streak >= 3 ? 'dance' : 'happy') : 'sad'}
             />

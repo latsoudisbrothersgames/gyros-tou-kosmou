@@ -15,7 +15,8 @@ export type ReactionEvent =
   | { type: 'collection:tap'; iso2: string };
 
 export type BallMood = 'idle' | 'happy' | 'dance' | 'sad' | 'surprised' | 'thinking'
-  | 'proud' | 'shy' | 'sleepy' | 'nervous' | 'celebrate' | 'wave' | 'shrug';
+  | 'proud' | 'shy' | 'sleepy' | 'nervous' | 'celebrate' | 'wave' | 'shrug'
+  | 'curious' | 'confused' | 'excited' | 'disappointed' | 'dizzy' | 'giggle' | 'love';
 
 export interface MoodStep {
   mood: BallMood;

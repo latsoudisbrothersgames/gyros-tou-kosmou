@@ -106,7 +106,7 @@ export function HomePage() {
             return country ? (
               <CountryBall
                 key={iso}
-                country={country}
+                country={country} identityVisible
                 size={i === 2 ? 120 : 88}
                 animationDelay={`${i * 0.6}s`}
               />

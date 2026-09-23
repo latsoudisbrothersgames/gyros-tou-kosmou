@@ -47,13 +47,13 @@ function NeighborsRound({ session: s }: { session: ReturnType<typeof useGeoSessi
     <h1>Οι γείτονες χτυπούν την πόρτα</h1>
     <p>Ποιοι από τους καλεσμένους συνορεύουν με {host.nameGreekAccusative};</p>
     {totalNeighbors > correct.length && <p>Βρες {correct.length} από τους {totalNeighbors} γείτονες ανάμεσα στις προσκλήσεις.</p>}
-    <div className="neighbors__house"><span aria-hidden="true">🏠</span><CountryBall country={host} size={100} reactive={false}
+    <div className="neighbors__house"><span aria-hidden="true">🏠</span><CountryBall country={host} size={100} identityVisible={answered} reactive={false}
       mood={answered ? 'celebrate' : 'idle'} speechEnabled={false} /></div>
     <RegionalMap iso2s={[host.iso2, ...guests.map(c => c.iso2)]} host={host.iso2}
       revealed={answered} highlighted={answered ? correct : []} />
     {answered && correct.length > 0 && <div className={`neighbors__table ${reduced ? 'neighbors__table--still' : ''}`}>
       <span aria-hidden="true">🍽️</span>{guests.filter(c => correctSet.has(c.iso2) && picked.includes(c.iso2)).map(c =>
-        <CountryBall key={c.iso2} country={c} size={44} reactive={false} speechEnabled={false} mood="happy" />)}
+        <CountryBall key={c.iso2} country={c} size={44} identityVisible={answered} reactive={false} speechEnabled={false} mood="happy" />)}
     </div>}
     <div className="neighbors__guests">
       {guests.map(c => {
@@ -62,7 +62,7 @@ function NeighborsRound({ session: s }: { session: ReturnType<typeof useGeoSessi
         return <button key={c.iso2} type="button" className={`neighbors__guest ${answered ? isRight ? 'neighbors__guest--right' : selected ? 'neighbors__guest--wrong' : '' : ''}`}
           aria-pressed={selected} disabled={answered}
           onClick={() => { setNone(false); setPicked(v => selected ? v.filter(id => id !== c.iso2) : [...v, c.iso2]); }}>
-          <CountryBall country={c} size={46} reactive={false} speechEnabled={false}
+          <CountryBall country={c} size={46} identityVisible={answered} reactive={false} speechEnabled={false}
             mood={answered ? isRight ? selected ? 'celebrate' : 'wave' : selected ? 'shrug' : 'idle' : 'idle'} />
           <span>{c.nameGreek}</span>
           {answered && <small>{isRight ? selected ? 'Πέρασε μέσα!' : pickGeoLine('missed', guests.indexOf(c)) : selected ? pickGeoLine('wrongGuest', guests.indexOf(c)) : ''}</small>}

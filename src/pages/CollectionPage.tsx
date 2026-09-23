@@ -84,7 +84,7 @@ export function CollectionPage() {
             >
               <button type="button" className="collection__tap" aria-label={`Παίξε με τη φιγούρα: ${c.nameGreek}`}
                 onClick={() => reactions?.emit({ type: 'collection:tap', iso2: c.iso2 })}>
-                <CountryBall country={c} size={84} />
+                <CountryBall country={c} size={84} identityVisible />
               </button>
               <Link to={`/country/${c.iso2}`} className="collection__name">{c.nameGreek}</Link>
             </div>

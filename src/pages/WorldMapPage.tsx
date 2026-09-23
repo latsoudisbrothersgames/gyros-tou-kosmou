@@ -216,7 +216,7 @@ export function WorldMapPage() {
                 </Button>
               </div>
               <div className="mappage__panel-ball">
-                <CountryBall country={selected} size={90} />
+                <CountryBall country={selected} size={90} identityVisible />
               </div>
             </div>
           ) : (
@@ -252,7 +252,7 @@ export function WorldMapPage() {
                   return (
                     <>
                       {country && (
-                        <CountryBall country={country} size={88} mood={correct ? 'happy' : 'sad'} />
+                        <CountryBall country={country} size={88} identityVisible mood={correct ? 'happy' : 'sad'} />
                       )}
                       {correct ? (
                         <p className="mapevent-modal__ok">✓ Μπράβο σου!</p>

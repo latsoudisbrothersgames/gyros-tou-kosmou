@@ -201,3 +201,17 @@
   .countryball__confetti { display: none; }
   .countryball__pupil { transform: none; }
 }
+
+/* Πρόσθετες εκφράσεις: σταθερά SVG paths, μόνο transform/opacity. */
+.countryball__mouth { animation: countryball-face-in 180ms ease-out both; }
+.countryball__eyes, .countryball__brows { transition: transform 180ms ease-out, opacity 180ms ease-out; }
+.countryball--curious .countryball__body { transform: rotate(-6deg); }
+.countryball--confused .countryball__eye:last-child { transform: translateY(4px); }
+.countryball--excited { animation: countryball-jump .55s ease-in-out infinite; }
+.countryball--disappointed { animation: countryball-sad 2.4s ease-in-out infinite; }
+.countryball--dizzy { animation: countryball-dizzy .7s ease-in-out 3; }
+.countryball--giggle { animation: countryball-giggle .3s ease-in-out infinite; }
+.countryball--love { animation: countryball-proud 1.4s ease-in-out infinite; }
+@keyframes countryball-face-in { from { opacity: 0; transform: translateY(2px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes countryball-dizzy { 50% { transform: rotate(13deg) scale(.96); } }
+@keyframes countryball-giggle { 50% { transform: translateY(-3px) rotate(3deg); } }

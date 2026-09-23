@@ -177,7 +177,7 @@ function PuzzleRound({ session: s }: { session: ReturnType<typeof useGeoSession<
         const w = piece.width * pos.scale, h = piece.height * pos.scale;
         const cx = inTray ? Math.min(pos.x + w + 4, 342) : pos.x + w / 2, cy = inTray ? pos.y + h : pos.y + h / 2;
         return <div key={piece.id} className="puzzle__ball" style={{ left: `${cx / 360 * 100}%`, top: `${cy / STAGE_H * 100}%` }}>
-          <CountryBall country={getCountryByIsoCode(piece.id)!} size={inTray ? 26 : 34} reactive={false} speechEnabled={false}
+          <CountryBall country={getCountryByIsoCode(piece.id)!} size={inTray ? 26 : 34} identityVisible={s.answered} reactive={false} speechEnabled={false}
             mood={active === piece.id ? 'nervous' : lastSnap && placed.includes(piece.id) && (piece.id === lastSnap || BORDERS[lastSnap]?.includes(piece.id)) ? 'wave' : placed.includes(piece.id) ? 'proud' : 'idle'} />
         </div>;
       })}
@@ -188,7 +188,7 @@ function PuzzleRound({ session: s }: { session: ReturnType<typeof useGeoSession<
         const country = getCountryByIsoCode(piece.id)!;
         return <li key={piece.id}>
           <span className="puzzle__swatch" style={{ backgroundColor: FINISH_COLORS[index] }} aria-hidden="true" />
-          <CountryBall country={country} size={24} reactive={false} speechEnabled={false} mood="celebrate" />
+          <CountryBall country={country} size={24} identityVisible reactive={false} speechEnabled={false} mood="celebrate" />
           <span>{country.nameGreek}</span>
         </li>;
       })}

@@ -29,7 +29,7 @@ function BiggerSession({ config }: { config: GameConfig }) {
           className={`new-mode__choice bigger__choice ${answered && winner ? 'new-mode__choice--correct' : answered && s.selected === country.iso2 ? 'new-mode__choice--wrong' : ''}`}>
           <span>{country.nameGreek}</span>
           <span className={`bigger__ball ${answered && winner ? 'bigger__ball--large' : ''}`}>
-            <CountryBall country={country} size={96} concealed={!answered} reactive={false}
+            <CountryBall country={country} size={96} identityVisible={answered} concealed={!answered} reactive={false}
               className={answered ? 'new-mode__reveal' : ''} mood={!answered ? 'thinking' : winner ? 'proud' : 'shy'} />
           </span>
           {answered && <span className="bigger__value">{population ? formatPopulationGreek(country.population) : formatAreaGreek(country.areaKm2)}</span>}

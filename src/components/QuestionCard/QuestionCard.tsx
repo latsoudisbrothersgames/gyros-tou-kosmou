@@ -102,7 +102,7 @@ export function QuestionCard({
               }
             >
               {showBall && choiceCountry && (
-                <CountryBall country={choiceCountry} size={42} />
+                <CountryBall country={choiceCountry} size={42} identityVisible={answered} />
               )}
               {!showBall && choiceCountry && (
                 <span className="choice__ball-mystery" aria-hidden="true">?</span>

@@ -148,7 +148,7 @@ function MapGameSession({
       <ExplorerPassport stops={state.answers} totalQuestions={session.totalQuestions} compact />
 
       <h2 className="mapgame__prompt">{question.prompt}</h2>
-      {targetCountry && <CountryBall country={targetCountry} size={72} />}
+      {targetCountry && <CountryBall country={targetCountry} size={72} identityVisible={answered} />}
 
       <WorldMap
         ref={mapRef}

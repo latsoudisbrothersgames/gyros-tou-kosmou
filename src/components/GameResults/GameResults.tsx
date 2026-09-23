@@ -107,7 +107,7 @@ export function GameResults({ state, onPlayAgain }: GameResultsProps) {
       <div className="game-results__parade" aria-label="Οι χώρες του ταξιδιού">
         {[...new Set(state.answers.map((a) => a.countryId))].map((iso2) => {
           const country = getCountryByIsoCode(iso2);
-          return country ? <CountryBall key={iso2} country={country} size={64} /> : null;
+          return country ? <CountryBall key={iso2} country={country} size={64} identityVisible /> : null;
         })}
       </div>
       <SessionRouteMap stops={state.answers} />
@@ -123,7 +123,7 @@ export function GameResults({ state, onPlayAgain }: GameResultsProps) {
                 className="game-results__discovery"
                 style={{ animationDelay: `${i * 140}ms` }}
               >
-                <CountryBall country={c} size={76} />
+                <CountryBall country={c} size={76} identityVisible />
                 <span className="game-results__discovery-name">{c.nameGreek}</span>
               </Link>
             ))}

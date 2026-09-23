@@ -26,6 +26,8 @@ interface CountryBallProps {
   concealed?: boolean;
   /** Επιτρέπει μία κοινή, ακέραιη φούσκα έξω από λωρίδες που κόβονται στα άκρα. */
   speechEnabled?: boolean;
+  /** Μόνο ρητή έγκριση εμφανίζει χώρα-ειδικά στοιχεία. */
+  identityVisible?: boolean;
 }
 
 /** Ντετερμινιστική «τυχαιότητα» από το iso2 — ίδια χώρα, ίδιος χαρακτήρας */
@@ -138,6 +140,7 @@ export function CountryBall({
   reactive = true,
   concealed = false,
   speechEnabled = true,
+  identityVisible = false,
 }: CountryBallProps) {
   const rootRef = useRef<HTMLDivElement>(null);
   const reactions = useReactions();
@@ -146,17 +149,18 @@ export function CountryBall({
     const element = rootRef.current;
     if (element && reactions) return reactions.registerBall(element, setLive);
   }, [reactions]);
+  const identity = identityVisible && !concealed;
   const reaction = useBallReaction(country.iso2, live && reactive && !concealed && explicitMood === undefined);
   const mood = explicitMood ?? reaction.mood;
   const uid = useId().replace(/[^a-zA-Z0-9]/g, '');
   const flagUrl = concealed ? undefined : getFlagUrl(country.iso2);
   const clipId = `cb-clip-${uid}`;
   const shadeId = `cb-shade-${uid}`;
-  const ch = characterFor(country.iso2);
+  const ch = characterFor(identity ? country.iso2 : 'xx');
   const delay = animationDelay ?? `${ch.delay.toFixed(2)}s`;
   const moodClass = `countryball--${mood}`;
-  const mouthKind = ['surprised', 'sleepy', 'nervous'].includes(mood) ? 2
-    : ['celebrate', 'dance', 'happy'].includes(mood) ? 3 : mood === 'idle' ? ch.mouth : 0;
+  const mouthKind = ['surprised', 'sleepy', 'nervous', 'confused', 'dizzy'].includes(mood) ? 2
+    : ['celebrate', 'dance', 'happy', 'excited', 'giggle', 'love'].includes(mood) ? 3 : mood === 'idle' ? ch.mouth : 0;
 
   const ballStyle = {
     width: size,
@@ -169,13 +173,13 @@ export function CountryBall({
   } as CSSProperties;
 
   return (
-    <div ref={rootRef} data-iso2={concealed ? undefined : country.iso2} data-live={live} className={`countryball ${moodClass} ${!live ? 'countryball--static' : ''} ${className}`} style={ballStyle}>
-      {speechEnabled && reaction.speech && (
+    <div ref={rootRef} data-iso2={identity ? country.iso2 : undefined} data-identity-visible={identity} data-live={live} className={`countryball ${moodClass} ${!live ? 'countryball--static' : ''} ${className}`} style={ballStyle}>
+      {speechEnabled && reaction.speech && (reaction.speech.reaction.speech === 'mood' || identity) && (
         <SpeechBubble key={`${country.iso2}-${reaction.speech.sequence}`} lines={
           reaction.speech.reaction.speech === 'greeting' ? [countryGreeting(country), countryFact(country)]
             : reaction.speech.reaction.speech === 'fact' ? [countryFact(country, reaction.speech.sequence - 1)]
-            : [pickBallLine(reaction.speech.reaction.steps[0].mood, country.iso2, reaction.speech.sequence)]
-        } audible={reaction.speech.event.type !== 'answer:correct' || reaction.speech.event.iso2 === country.iso2} />
+            : [pickBallLine(reaction.speech.reaction.steps[0].mood, identity ? country.iso2 : 'xx', reaction.speech.sequence)]
+        } voiceIso2={identity ? country.iso2 : undefined} audible={reaction.speech.event.type !== 'answer:correct' || reaction.speech.event.iso2 === country.iso2} />
       )}
       <svg
         aria-hidden="true"
@@ -275,16 +279,23 @@ export function CountryBall({
             </g>
           </g>
 
-          {/* Στόμα */}
+          {/* Στόμα: νέο επίπεδο ανά διάθεση για ασφαλές fade στο Safari. */}
+          <g key={mood} className="countryball__mouth">
           {mood === 'sad' || mood === 'shrug' ? (
             <path d={mood === 'sad' ? 'M40 68 Q50 58 60 68' : 'M41 64 L59 62'} fill="none" stroke="#14283c" strokeWidth="2.6" strokeLinecap="round" />
-          ) : <Mouth kind={mouthKind} cy={ch.eyeCy} />}
+          ) : mood === 'disappointed' ? <path d="M40 66 Q50 63 60 66" fill="none" stroke="#14283c" strokeWidth="2.6" strokeLinecap="round" /> : <Mouth kind={mouthKind} cy={ch.eyeCy} />}
+          </g>
           {(mood === 'sleepy' || mood === 'shy' || mood === 'thinking') && (
             <g fill="#8aa9bb" stroke="#14283c" strokeWidth="1">
               <path d={`M${ch.eyeLeftCx - ch.eyeRx} ${ch.eyeCy} a${ch.eyeRx} ${ch.eyeRy} 0 0 1 ${ch.eyeRx * 2} 0 Z`} />
               <path d={`M${ch.eyeRightCx - ch.eyeRx} ${ch.eyeCy} a${ch.eyeRx} ${ch.eyeRy} 0 0 1 ${ch.eyeRx * 2} 0 Z`} />
             </g>
           )}
+          {mood === 'curious' && <path d="M28 25 Q35 20 42 24" fill="none" stroke="#14283c" strokeWidth="2.4" strokeLinecap="round" />}
+          {mood === 'confused' && <text x="72" y="28" fontSize="18" fontWeight="bold" fill="#14283c">?</text>}
+          {mood === 'excited' && <g fill="#ffdf63"><path d="M33 38 l2 5 5 1 -5 2 -2 5 -2 -5 -5 -2 5 -1Z"/><path d="M65 38 l2 5 5 1 -5 2 -2 5 -2 -5 -5 -2 5 -1Z"/></g>}
+          {mood === 'dizzy' && <g fill="none" stroke="#14283c" strokeWidth="2"><path d="M29 42 q8 -9 12 0 q3 7 -7 7 q-5 -1 -2 -5"/><path d="M59 42 q8 -9 12 0 q3 7 -7 7 q-5 -1 -2 -5"/></g>}
+          {mood === 'love' && <g fill="#ff718d"><path d="M26 42 C26 34 34 34 35 39 C37 34 45 34 45 42 L35 52Z"/><path d="M56 42 C56 34 64 34 65 39 C67 34 75 34 75 42 L65 52Z"/></g>}
           {mood === 'nervous' && <path className="countryball__sweat" d="M80 24 Q69 40 80 41 Q90 40 80 24Z" fill="#55cfff" stroke="#0d2f4f" />}
           {mood === 'sleepy' && <text className="countryball__zzz" x="70" y="16" fontSize="15" fill="#0d2f4f">ζζζ</text>}
           {(mood === 'wave' || mood === 'shrug') && (

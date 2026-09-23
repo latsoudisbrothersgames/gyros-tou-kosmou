@@ -161,7 +161,7 @@ function QuizSession({ config }: { config: GameConfig }) {
         <div className="quiz__feedback" role="status" aria-live="assertive">
           {correctCountry && (
             <CountryBall
-              country={correctCountry}
+              country={correctCountry} identityVisible
               size={92}
             />
           )}
