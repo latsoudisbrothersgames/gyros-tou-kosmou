@@ -153,7 +153,7 @@ export function CountryPage() {
               </div>
               <div className="atlas__ball">
                 <CountryBall
-                  country={country} identityVisible
+                  country={country} identityVisible playful
                   size={150}
                 />
               </div>

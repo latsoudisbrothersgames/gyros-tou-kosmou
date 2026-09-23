@@ -6,6 +6,8 @@ import { useBallReaction } from '../../reactions/useBallReaction';
 import type { BallMood } from '../../reactions/events';
 export type { BallMood } from '../../reactions/events';
 import { SpeechBubble } from '../SpeechBubble/SpeechBubble';
+import { touchReaction } from '../../reactions/touch';
+import { vibrate } from '../../utils/haptics';
 import { useSettings } from '../../context/SettingsContext';
 import { countryFact, countryGreeting, pickBallLine } from '../../data/ballLines';
 import './CountryBall.css';
@@ -29,6 +31,8 @@ interface CountryBallProps {
   speechEnabled?: boolean;
   /** Μόνο ρητή έγκριση εμφανίζει χώρα-ειδικά στοιχεία. */
   identityVisible?: boolean;
+  /** Επιτρέπεται μόνο έξω από απαντήσεις/κομμάτια παζλ. */
+  playful?: boolean;
 }
 
 /** Ντετερμινιστική «τυχαιότητα» από το iso2 — ίδια χώρα, ίδιος χαρακτήρας */
@@ -142,11 +146,38 @@ export function CountryBall({
   concealed = false,
   speechEnabled = true,
   identityVisible = false,
+  playful = false,
 }: CountryBallProps) {
   const rootRef = useRef<HTMLDivElement>(null);
   const reactions = useReactions();
   const [live, setLive] = useState(false);
   const [microMood, setMicroMood] = useState<BallMood | null>(null);
+  const [touch, setTouch] = useState<{ mood: BallMood; line: string; sequence: number } | null>(null);
+  const touchTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const clearTouchTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const tapHistory = useRef<number[]>([]);
+  const longFired = useRef(false);
+  useEffect(() => () => { clearTimeout(touchTimer.current); clearTimeout(clearTouchTimer.current); }, []);
+  const reactToTouch = (longPress: boolean) => {
+    const now = Date.now();
+    tapHistory.current = longPress ? [] : [...tapHistory.current.filter(t => now - t < 1100), now];
+    const reaction = touchReaction(tapHistory.current.length, longPress);
+    setTouch({ mood: reaction.mood, line: reaction.line, sequence: now });
+    clearTimeout(clearTouchTimer.current);
+    clearTouchTimer.current = setTimeout(() => setTouch(null), reaction.duration);
+    vibrate(longPress ? 20 : 8);
+  };
+  const pointerDown = () => {
+    if (!playful) return;
+    longFired.current = false;
+    clearTimeout(touchTimer.current);
+    touchTimer.current = setTimeout(() => { longFired.current = true; reactToTouch(true); }, 600);
+  };
+  const pointerUp = () => {
+    if (!playful) return;
+    clearTimeout(touchTimer.current);
+    if (!longFired.current) reactToTouch(false);
+  };
   const { settings } = useSettings();
   useEffect(() => {
     const element = rootRef.current;
@@ -155,7 +186,7 @@ export function CountryBall({
   const identity = identityVisible && !concealed;
   const reaction = useBallReaction(country.iso2, live && reactive && !concealed && explicitMood === undefined);
   const uid = useId().replace(/[^a-zA-Z0-9]/g, '');
-  const mood = explicitMood ?? (reaction.mood !== 'idle' ? reaction.mood : microMood ?? 'idle');
+  const mood = touch?.mood ?? explicitMood ?? (reaction.mood !== 'idle' ? reaction.mood : microMood ?? 'idle');
   useEffect(() => {
     if (!live || explicitMood !== undefined || settings.reducedMotion || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     const rand = makeSeededRandom(uid);
@@ -198,8 +229,11 @@ export function CountryBall({
   } as CSSProperties;
 
   return (
-    <div ref={rootRef} data-iso2={identity ? country.iso2 : undefined} data-identity-visible={identity} data-live={live} className={`countryball ${moodClass} ${!live ? 'countryball--static' : ''} ${className}`} style={ballStyle}>
-      {speechEnabled && reaction.speech && (reaction.speech.reaction.speech === 'mood' || identity) && (
+    <div ref={rootRef} onPointerDown={pointerDown} onPointerUp={pointerUp} onPointerCancel={() => clearTimeout(touchTimer.current)}
+      onKeyDown={playful ? event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); reactToTouch(false); } } : undefined}
+      role={playful ? 'button' : undefined} tabIndex={playful ? 0 : undefined} aria-label={playful ? 'Παίξε με τη φιγούρα' : undefined} data-iso2={identity ? country.iso2 : undefined} data-identity-visible={identity} data-live={live} className={`countryball ${moodClass} ${!live ? 'countryball--static' : ''} ${className}`} style={ballStyle}>
+      {touch && <SpeechBubble key={touch.sequence} lines={[touch.line]} voiceIso2={identity ? country.iso2 : undefined} />}
+      {!touch && speechEnabled && reaction.speech && (reaction.speech.reaction.speech === 'mood' || identity) && (
         <SpeechBubble key={`${country.iso2}-${reaction.speech.sequence}`} lines={
           reaction.speech.reaction.speech === 'greeting' ? [countryGreeting(country), countryFact(country)]
             : reaction.speech.reaction.speech === 'fact' ? [countryFact(country, reaction.speech.sequence - 1)]

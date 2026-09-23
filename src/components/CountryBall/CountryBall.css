@@ -215,3 +215,7 @@
 @keyframes countryball-face-in { from { opacity: 0; transform: translateY(2px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes countryball-dizzy { 50% { transform: rotate(13deg) scale(.96); } }
 @keyframes countryball-giggle { 50% { transform: translateY(-3px) rotate(3deg); } }
+
+.countryball[role="button"] { cursor: pointer; touch-action: manipulation; }
+.countryball[role="button"]:focus-visible { outline: 3px solid var(--ocean-500); outline-offset: 3px; border-radius: 50%; }
+.countryball[role="button"]:active { transform: scale(1.08, .9); }

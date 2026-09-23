@@ -216,7 +216,7 @@ export function WorldMapPage() {
                 </Button>
               </div>
               <div className="mappage__panel-ball">
-                <CountryBall country={selected} size={90} identityVisible />
+                <CountryBall country={selected} size={90} identityVisible playful />
               </div>
             </div>
           ) : (
