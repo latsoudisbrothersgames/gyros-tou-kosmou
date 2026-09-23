@@ -10,7 +10,7 @@ import { vibrate } from '../utils/haptics';
 import './YardPage.css';
 
 const DIAMETER = 70;
-type Body = { x: number; y: number; vx: number; vy: number; held: boolean; lastX: number; lastY: number; lastT: number; moved: boolean; bumpedAt: number; targetX?: number; targetY?: number };
+type Body = { x: number; y: number; vx: number; vy: number; held: boolean; lastX: number; lastY: number; lastT: number; moved: boolean; bumpedAt: number; wallAt: number; targetX?: number; targetY?: number };
 
 /** Πρόσθετη ελεύθερη αυλή· δεν γράφει πρόοδο ή αποτέλεσμα παιχνιδιού. */
 export function YardPage() {
@@ -54,11 +54,13 @@ export function YardPage() {
     if (!stage) return;
     const width = () => Math.max(DIAMETER, stage.clientWidth);
     const height = () => Math.max(DIAMETER, stage.clientHeight);
+    // Περιθώρια ώστε να μην κόβεται η μπάλα όταν αναπηδά: δεξιά το κρατούμενο αξεσουάρ, κάτω το όνομα (Claude 23.09).
+    const EDGE = 6, maxX = () => Math.max(EDGE, width() - DIAMETER - 18), maxY = () => Math.max(EDGE, height() - DIAMETER - 28);
     bodies.current = owned.map((_, i) => ({
-      x: 8 + (i % 3) * Math.max(0, (width() - DIAMETER - 24) / 2),
+      x: EDGE + 2 + (i % 3) * Math.max(0, (maxX() - EDGE - 4) / 2),
       y: 24 + Math.floor(i / 3) * Math.max(0, (height() - DIAMETER - 64) / 3),
       vx: (i % 2 ? 1 : -1) * (.3 + i * .035), vy: (i % 3 ? .28 : -.28),
-      held: false, lastX: 0, lastY: 0, lastT: 0, moved: false, bumpedAt: -3000,
+      held: false, lastX: 0, lastY: 0, lastT: 0, moved: false, bumpedAt: -3000, wallAt: -3000,
     }));
     let frame = 0;
     let previous = 0;
@@ -85,13 +87,13 @@ export function YardPage() {
             b.x += b.vx * dt; b.y += b.vy * dt;
             b.vx *= .998; b.vy *= .998;
             // Απαλό ελατήριο κρατά τις μπάλες μέσα στον χώρο.
-            if ((b.x < 0 || b.x > width() - DIAMETER || b.y < 0 || b.y > height() - DIAMETER) && Math.hypot(b.vx, b.vy) > 2 && time - b.bumpedAt > 2400) {
-              b.bumpedAt = time; temporaryMood(i, 'disappointed', 750);
+            if ((b.x < EDGE || b.x > maxX() || b.y < EDGE || b.y > maxY()) && Math.hypot(b.vx, b.vy) > 2 && time - b.wallAt > 2400 && time - b.bumpedAt > 900) {
+              b.wallAt = time; temporaryMood(i, 'disappointed', 750);
             }
-            if (b.x < 0 || b.x > width() - DIAMETER) b.vx += (Math.max(0, Math.min(width() - DIAMETER, b.x)) - b.x) * .055 * dt;
-            if (b.y < 0 || b.y > height() - DIAMETER) b.vy += (Math.max(0, Math.min(height() - DIAMETER, b.y)) - b.y) * .055 * dt;
-            b.x = Math.max(-8, Math.min(width() - DIAMETER + 8, b.x));
-            b.y = Math.max(-8, Math.min(height() - DIAMETER + 8, b.y));
+            if (b.x < EDGE || b.x > maxX()) b.vx += (Math.max(EDGE, Math.min(maxX(), b.x)) - b.x) * .055 * dt;
+            if (b.y < EDGE || b.y > maxY()) b.vy += (Math.max(EDGE, Math.min(maxY(), b.y)) - b.y) * .055 * dt;
+            b.x = Math.max(2, Math.min(maxX() + 4, b.x));
+            b.y = Math.max(2, Math.min(maxY() + 4, b.y));
           }
           nodes.current[i]?.style.setProperty('transform', `translate3d(${b.x.toFixed(1)}px, ${b.y.toFixed(1)}px, 0)`);
         }
