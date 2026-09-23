@@ -49,4 +49,9 @@
 .post__delivery { display: flex; align-items: center; justify-content: center; gap: 10px; padding: 10px; border-radius: 14px; background: #fff2d0; }
 .post__delivery span { font-size: 2.5rem; }
 .puzzle__stage--still .puzzle__joined { animation: none; }
+.puzzle__legend { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 8px; padding: 0; margin: 8px 0 14px; list-style: none; }
+.puzzle__legend li { display: flex; align-items: center; gap: 9px; min-width: 0; min-height: 44px; padding: 5px 9px; border-radius: 10px; background: #fff9eb; color: #17344a; font-weight: 800; }
+.puzzle__legend li > span:last-child { min-width: 0; overflow-wrap: anywhere; }
+.puzzle__legend .countryball { flex: 0 0 24px; }
+.puzzle__swatch { flex: 0 0 18px; width: 18px; height: 18px; border: 1px solid #946743; border-radius: 5px; }
 @media (prefers-reduced-motion: reduce) { .neighbors__table .countryball { animation: none; } }

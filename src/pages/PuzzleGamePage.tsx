@@ -19,6 +19,7 @@ import { playSound } from '../audio/soundManager';
 
 interface Piece { id: string; d: string; x: number; y: number; width: number; height: number; scale: number; tiny: boolean }
 type Position = { x: number; y: number; scale: number };
+const FINISH_COLORS = ['#f4a682', '#f2cb72', '#a6d7aa', '#9dd7df', '#b9b7ed', '#e7b6d5', '#bbd17f', '#f2b69b'];
 export function PuzzleGamePage() {
   const [params] = useSearchParams();
   return <PuzzleSession key={params.toString()} config={parseGameConfig('puzzle', params)!} />;
@@ -135,37 +136,45 @@ function PuzzleRound({ session: s }: { session: ReturnType<typeof useGeoSession<
   return <>
     <h1>Ο άτλαντας έγινε κομμάτια</h1>
     <p>{s.round.title} · Σύρε τις χώρες στη σωστή θέση.</p>
-    <svg ref={svgRef} className={`puzzle__stage ${reduced ? 'puzzle__stage--still' : ''}`} viewBox="0 0 360 550" onPointerMove={move} onPointerUp={end} onPointerCancel={end}
+    <svg ref={svgRef} className={`puzzle__stage ${reduced ? 'puzzle__stage--still' : ''}`} viewBox={`0 0 360 ${s.answered ? 268 : 550}`} onPointerMove={move} onPointerUp={end} onPointerCancel={end}
       role="img" aria-label="Παζλ χωρών με δίσκο κομματιών">
       <rect x="3" y="3" width="354" height="260" rx="16" fill="#e6f5fa" stroke="#9ccbd7" />
       {s.state.config.difficulty === 'easy' && geom.exterior && <path d={geom.exterior} fill="none" stroke="#a2aaa3" strokeWidth="2" opacity=".65" />}
       {s.state.config.difficulty === 'medium' && geom.coast && <path d={geom.coast} fill="none" stroke="#a2aaa3" strokeWidth="1" opacity=".6" />}
-      <rect x="3" y="274" width="354" height="270" rx="16" fill="#fff3d6" stroke="#dfc98c" />
+      {!s.answered && <rect x="3" y="274" width="354" height="270" rx="16" fill="#fff3d6" stroke="#dfc98c" />}
       {[...geom.borders].filter(([pair]) => pair.split('-').every(id => joined.includes(id))).map(([pair, d]) =>
         <path key={pair} d={d} fill="none" stroke="#ffb233" strokeWidth="4" className="puzzle__joined" />)}
-      {geom.pieces.map(piece => {
+      {geom.pieces.map((piece, index) => {
         const pos = placed.includes(piece.id) ? { x: piece.x, y: piece.y, scale: 1 } : positions[piece.id];
         const country = getCountryByIsoCode(piece.id)!;
         return <g key={piece.id} transform={`translate(${pos.x} ${pos.y}) scale(${pos.scale})`}
           className={`puzzle__piece ${placed.includes(piece.id) ? 'puzzle__piece--placed' : ''} ${active === piece.id ? 'puzzle__piece--active' : ''}`}
           onPointerDown={e => begin(e, piece)} aria-label={country.nameGreek}>
-          <path d={piece.d} fill="#ffcc7a" stroke="#a76d36" strokeWidth="1.5" />
+          <path d={piece.d} fill={s.answered ? FINISH_COLORS[index] : '#ffcc7a'} stroke="#a76d36" strokeWidth="1.5" />
           <rect x={piece.width / 2 - Math.max(piece.width, 52 / pos.scale) / 2}
             y={piece.height / 2 - Math.max(piece.height, 52 / pos.scale) / 2}
             width={Math.max(piece.width, 52 / pos.scale)} height={Math.max(piece.height, 52 / pos.scale)} fill="transparent" />
-          <g transform={`translate(${piece.width / 2} ${piece.height / 2}) scale(${1 / pos.scale})`} pointerEvents="none">
+          {!s.answered && <g transform={`translate(${piece.width / 2} ${piece.height / 2}) scale(${1 / pos.scale})`} pointerEvents="none">
             <foreignObject x="-19" y="-20" width="38" height="42">
               <CountryBall country={country} size={34} reactive={false} speechEnabled={false}
                 mood={s.answered ? 'celebrate' : active === piece.id ? 'nervous' : lastSnap && placed.includes(piece.id) && (piece.id === lastSnap || BORDERS[lastSnap]?.includes(piece.id)) ? 'wave' : placed.includes(piece.id) ? 'proud' : 'idle'} />
             </foreignObject>
-          </g>
+          </g>}
           {piece.tiny && !placed.includes(piece.id) && <text x={2 / pos.scale} y={-4 / pos.scale}
             fontSize={11 / pos.scale} fill="#21405a">🔍 {country.nameGreek}</text>}
         </g>;
       })}
-      {s.answered && geom.pieces.map(piece => <text key={piece.id} x={piece.x} y={Math.min(258, piece.y + piece.height + 14)}
-        fontSize="10" fill="#17344a">{getCountryByIsoCode(piece.id)?.nameGreek}</text>)}
     </svg>
+    {s.answered && <ul className="puzzle__legend" aria-label="Χώρες του ολοκληρωμένου χάρτη">
+      {geom.pieces.map((piece, index) => {
+        const country = getCountryByIsoCode(piece.id)!;
+        return <li key={piece.id}>
+          <span className="puzzle__swatch" style={{ backgroundColor: FINISH_COLORS[index] }} aria-hidden="true" />
+          <CountryBall country={country} size={24} reactive={false} speechEnabled={false} mood="celebrate" />
+          <span>{country.nameGreek}</span>
+        </li>;
+      })}
+    </ul>}
     {lastSnap && !s.answered && <p role="status">{pickGeoLine('puzzleSnap', placed.length)}</p>}
     <p>Κομμάτια: {placed.length}/{geom.pieces.length} · Λάθος αποθέσεις: {misdrops}</p>
     {s.answered && <p>Μπράβο! Όλες οι χώρες βρήκαν τη θέση τους.</p>}
