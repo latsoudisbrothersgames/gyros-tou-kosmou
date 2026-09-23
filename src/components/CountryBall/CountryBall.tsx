@@ -6,6 +6,7 @@ import { useBallReaction } from '../../reactions/useBallReaction';
 import type { BallMood } from '../../reactions/events';
 export type { BallMood } from '../../reactions/events';
 import { SpeechBubble } from '../SpeechBubble/SpeechBubble';
+import { BORDERS } from '../../data/borders';
 import { touchReaction } from '../../reactions/touch';
 import { vibrate } from '../../utils/haptics';
 import { useSettings } from '../../context/SettingsContext';
@@ -152,6 +153,7 @@ export function CountryBall({
   const reactions = useReactions();
   const [live, setLive] = useState(false);
   const [microMood, setMicroMood] = useState<BallMood | null>(null);
+  const [social, setSocial] = useState<{ mood: BallMood; line?: string; clap?: boolean } | null>(null);
   const [touch, setTouch] = useState<{ mood: BallMood; line: string; sequence: number } | null>(null);
   const touchTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const clearTouchTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
@@ -186,7 +188,39 @@ export function CountryBall({
   const identity = identityVisible && !concealed;
   const reaction = useBallReaction(country.iso2, live && reactive && !concealed && explicitMood === undefined);
   const uid = useId().replace(/[^a-zA-Z0-9]/g, '');
-  const mood = touch?.mood ?? explicitMood ?? (reaction.mood !== 'idle' ? reaction.mood : microMood ?? 'idle');
+  const mood = touch?.mood ?? social?.mood ?? explicitMood ?? (reaction.mood !== 'idle' ? reaction.mood : microMood ?? 'idle');
+  useEffect(() => {
+    if (!live || !identity) return;
+    const root = rootRef.current;
+    const group = root?.closest('[data-ball-social]');
+    if (!root || !group) return;
+    let end: ReturnType<typeof setTimeout> | undefined;
+    const nearby = () => [...group.querySelectorAll<HTMLElement>('.countryball[data-identity-visible="true"]')]
+      .filter(other => other !== root && other.dataset.iso2 && Math.hypot(
+        other.getBoundingClientRect().x - root.getBoundingClientRect().x,
+        other.getBoundingClientRect().y - root.getBoundingClientRect().y) < 180);
+    const greet = () => {
+      const neighbor = nearby().find(other => BORDERS[country.iso2]?.includes(other.dataset.iso2 ?? ''));
+      if (!neighbor) return;
+      root.style.setProperty('--cb-look-x', neighbor.getBoundingClientRect().x > root.getBoundingClientRect().x ? '2px' : '-2px');
+      if (country.iso2 < (neighbor.dataset.iso2 ?? '')) {
+        setSocial({ mood: 'wave', line: 'Γεια σου γείτονα!' });
+        clearTimeout(end); end = setTimeout(() => { setSocial(null); root.style.setProperty('--cb-look-x', '0px'); }, 1800);
+      }
+    };
+    const timer = setInterval(greet, 11000);
+    const first = setTimeout(greet, 1400);
+    const waveTimers: ReturnType<typeof setTimeout>[] = [];
+    const unsub = reactions?.subscribe('*', event => {
+      if (event.type !== 'answer:correct') return;
+      const others = nearby();
+      const index = others.findIndex(other => other.dataset.iso2 === event.iso2);
+      if (index < 0 || event.iso2 === country.iso2) return;
+      waveTimers.push(setTimeout(() => { setSocial({ mood: 'wave', clap: true });
+        clearTimeout(end); end = setTimeout(() => setSocial(null), 850); }, (index + 1) * 130));
+    });
+    return () => { clearInterval(timer); clearTimeout(first); clearTimeout(end); waveTimers.forEach(clearTimeout); unsub?.(); };
+  }, [live, identity, country.iso2, reactions]);
   useEffect(() => {
     if (!live || explicitMood !== undefined || settings.reducedMotion || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     const rand = makeSeededRandom(uid);
@@ -231,9 +265,10 @@ export function CountryBall({
   return (
     <div ref={rootRef} onPointerDown={pointerDown} onPointerUp={pointerUp} onPointerCancel={() => clearTimeout(touchTimer.current)}
       onKeyDown={playful ? event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); reactToTouch(false); } } : undefined}
-      role={playful ? 'button' : undefined} tabIndex={playful ? 0 : undefined} aria-label={playful ? 'Παίξε με τη φιγούρα' : undefined} data-iso2={identity ? country.iso2 : undefined} data-identity-visible={identity} data-live={live} className={`countryball ${moodClass} ${!live ? 'countryball--static' : ''} ${className}`} style={ballStyle}>
+      role={playful ? 'button' : undefined} tabIndex={playful ? 0 : undefined} aria-label={playful ? 'Παίξε με τη φιγούρα' : undefined} data-iso2={identity ? country.iso2 : undefined} data-identity-visible={identity} data-live={live} className={`countryball ${moodClass} ${social?.clap ? 'countryball--clap' : ''} ${!live ? 'countryball--static' : ''} ${className}`} style={ballStyle}>
+      {!touch && social?.line && <SpeechBubble lines={[social.line]} voiceIso2={country.iso2} />}
       {touch && <SpeechBubble key={touch.sequence} lines={[touch.line]} voiceIso2={identity ? country.iso2 : undefined} />}
-      {!touch && speechEnabled && reaction.speech && (reaction.speech.reaction.speech === 'mood' || identity) && (
+      {!touch && !social?.line && speechEnabled && reaction.speech && (reaction.speech.reaction.speech === 'mood' || identity) && (
         <SpeechBubble key={`${country.iso2}-${reaction.speech.sequence}`} lines={
           reaction.speech.reaction.speech === 'greeting' ? [countryGreeting(country), countryFact(country)]
             : reaction.speech.reaction.speech === 'fact' ? [countryFact(country, reaction.speech.sequence - 1)]
@@ -360,7 +395,7 @@ export function CountryBall({
           {(mood === 'wave' || mood === 'shrug') && (
             <g fill="none" stroke="#0d2f4f" strokeWidth="3" strokeLinecap="round">
               <path className="countryball__hand" d="M90 63 Q105 59 102 42 M102 42 l-5 -4 M102 42 l5 -5" />
-              {mood === 'shrug' && <path d="M10 63 Q-5 58 -2 46 M-2 46 l-4 -3 M-2 46 l5 -4" />}
+              {(mood === 'shrug' || social?.clap) && <path d="M10 63 Q-5 58 -2 46 M-2 46 l-4 -3 M-2 46 l5 -4" />}
             </g>
           )}
           {mood === 'celebrate' && (

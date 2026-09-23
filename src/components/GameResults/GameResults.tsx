@@ -104,7 +104,7 @@ export function GameResults({ state, onPlayAgain }: GameResultsProps) {
         />
       </div>
 
-      <div className="game-results__parade" aria-label="Οι χώρες του ταξιδιού">
+      <div data-ball-social className="game-results__parade" aria-label="Οι χώρες του ταξιδιού">
         {[...new Set(state.answers.map((a) => a.countryId))].map((iso2) => {
           const country = getCountryByIsoCode(iso2);
           return country ? <CountryBall key={iso2} country={country} size={64} identityVisible /> : null;

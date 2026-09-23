@@ -219,3 +219,5 @@
 .countryball[role="button"] { cursor: pointer; touch-action: manipulation; }
 .countryball[role="button"]:focus-visible { outline: 3px solid var(--ocean-500); outline-offset: 3px; border-radius: 50%; }
 .countryball[role="button"]:active { transform: scale(1.08, .9); }
+
+.countryball--clap .countryball__hand { animation: countryball-hand .24s ease-in-out 4 alternate; }

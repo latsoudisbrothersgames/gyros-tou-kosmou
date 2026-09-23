@@ -73,7 +73,7 @@ export function CollectionPage() {
         ))}
       </div>
 
-      <div className="collection__grid">
+      <div className="collection__grid" data-ball-social>
         {countries.map((c) => {
           const owned = collection.has(c.iso2);
           return owned ? (
