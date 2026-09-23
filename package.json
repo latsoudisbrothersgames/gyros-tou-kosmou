@@ -17,7 +17,8 @@
     "audit:dist": "node tools/audit_dist.mjs",
     "probe:modes": "node tools/modes_probe.mjs && node tools/geo_modes_probe.mjs && node tools/identity_probe.mjs",
     "test:markup": "node tools/modes_markup_test.mjs",
-    "gen:borders": "node --import ./scripts/register_ts.mjs scripts/genBorders.ts"
+    "gen:borders": "node --import ./scripts/register_ts.mjs scripts/genBorders.ts",
+    "probe:touch": "node tools/touch_probe.mjs"
   },
   "dependencies": {
     "@types/d3-transition": "^3.0.9",

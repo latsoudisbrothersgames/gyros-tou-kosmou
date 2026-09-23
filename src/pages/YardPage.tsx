@@ -6,11 +6,10 @@ import { ALL_COUNTRIES } from '../data/countries';
 import { canGreet } from '../reactions/social';
 import { useReducedMotion } from '../hooks/useReducedMotion';
 import { loadCollection } from '../utils/collection';
-import { vibrate } from '../utils/haptics';
 import './YardPage.css';
 
 const DIAMETER = 70;
-type Body = { x: number; y: number; vx: number; vy: number; held: boolean; lastX: number; lastY: number; lastT: number; moved: boolean; bumpedAt: number; wallAt: number; targetX?: number; targetY?: number };
+type Body = { x: number; y: number; vx: number; vy: number; held: boolean; lastX: number; lastY: number; lastT: number; moved: boolean; bumpedAt: number; wallAt: number; downAt?: number; targetX?: number; targetY?: number };
 
 /** Πρόσθετη ελεύθερη αυλή· δεν γράφει πρόοδο ή αποτέλεσμα παιχνιδιού. */
 export function YardPage() {
@@ -25,6 +24,8 @@ export function YardPage() {
   const sleeping = useRef(false);
   const [moods, setMoods] = useState<Record<string, BallMood>>({});
   const [bubble, setBubble] = useState<{ index: number; sequence: number; lines: string[] } | null>(null);
+  const [taps, setTaps] = useState<Record<string, number>>({});
+  const [hugs, setHugs] = useState<Record<string, number>>({});
   const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
   const moodTimers = useRef(new Map<string, ReturnType<typeof setTimeout>>());
   const temporaryMood = useCallback((index: number, mood: BallMood, duration = 1000) => {
@@ -125,7 +126,7 @@ export function YardPage() {
     if (reduced) { temporaryMood(index, 'love', 1400); setBubble({ index, sequence: Date.now(), lines: ['Χι χι! Παίζουμε μαζί!'] }); return; }
     const b = bodies.current[index]; if (!b) return;
     event.currentTarget.setPointerCapture(event.pointerId);
-    b.held = true; b.targetX = b.targetY = undefined; b.moved = false; b.lastX = event.clientX; b.lastY = event.clientY; b.lastT = performance.now();
+    b.held = true; b.targetX = b.targetY = undefined; b.moved = false; b.lastX = event.clientX; b.lastY = event.clientY; b.lastT = performance.now(); b.downAt = b.lastT;
     lastInput.current = Date.now();
     if (sleeping.current) { sleeping.current = false; setMoods({}); b.vx = .5; b.vy = -.5; }
     temporaryMood(index, 'curious', 800);
@@ -134,7 +135,7 @@ export function YardPage() {
     const b = bodies.current[index]; if (!b?.held || reduced) return;
     const now = performance.now(), dt = Math.max(16, now - b.lastT);
     const dx = event.clientX - b.lastX, dy = event.clientY - b.lastY;
-    if (Math.hypot(dx, dy) > 2) b.moved = true;
+    if (Math.hypot(dx, dy) > 6) b.moved = true;
     b.x += dx; b.y += dy; b.vx = Math.max(-8, Math.min(8, dx / dt * 16)); b.vy = Math.max(-8, Math.min(8, dy / dt * 16));
     b.lastX = event.clientX; b.lastY = event.clientY; b.lastT = now;
     lastInput.current = Date.now();
@@ -142,7 +143,12 @@ export function YardPage() {
   const up = (index: number) => {
     const b = bodies.current[index]; if (!b?.held || reduced) return;
     b.held = false; lastInput.current = Date.now();
-    if (!b.moved) { temporaryMood(index, 'giggle', 900); setBubble({ index, sequence: Date.now(), lines: ['Χι χι! Παίζουμε μαζί!'] }); vibrate(8); }
+    if (!b.moved) {
+      // Άγγιγμα, όχι σύρσιμο: η μπάλα μετρά το σερί (3 → γαργάλημα, 6 → ζάλη) ή δίνει αγκαλιά σε παρατεταμένο πάτημα.
+      const held = performance.now() - (b.downAt ?? performance.now());
+      const iso2 = owned[index]?.iso2;
+      if (iso2) (held >= 600 ? setHugs : setTaps)(v => ({ ...v, [iso2]: (v[iso2] ?? 0) + 1 }));
+    }
     else temporaryMood(index, 'excited', 1000);
   };
   const stageTap = (event: PointerEvent<HTMLDivElement>) => {
@@ -181,7 +187,7 @@ export function YardPage() {
           onKeyDown={event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); temporaryMood(index, 'love', 1400); setBubble({ index, sequence: Date.now(), lines: ['Χι χι! Παίζουμε μαζί!'] }); } }}
           role="button" tabIndex={0} aria-label={`Παίξε με τη φιγούρα: ${country.nameGreek}`}>
           {bubble?.index === index && <SpeechBubble key={bubble.sequence} lines={bubble.lines} voiceIso2={country.iso2} />}
-          <CountryBall country={country} size={DIAMETER} identityVisible mood={moods[country.iso2] ?? 'idle'} reactive={false} speechEnabled={false} />
+          <CountryBall country={country} size={DIAMETER} identityVisible mood={moods[country.iso2] ?? 'idle'} reactive={false} speechEnabled={false} tapSignal={taps[country.iso2] ?? 0} hugSignal={hugs[country.iso2] ?? 0} />
           <span className="yard__name">{country.nameGreek}</span>
         </div>)}
       </div>}

@@ -9,7 +9,7 @@ import { SpeechBubble } from '../SpeechBubble/SpeechBubble';
 import { BALL_ACCESSORIES } from '../../data/ballAccessories';
 import { BallAccessory } from './BallAccessory';
 import { canGreet } from '../../reactions/social';
-import { touchReaction } from '../../reactions/touch';
+import { nextTapStreak, touchReaction } from '../../reactions/touch';
 import { vibrate } from '../../utils/haptics';
 import { useSettings } from '../../context/SettingsContext';
 import { countryFact, countryGreeting, pickBallLine } from '../../data/ballLines';
@@ -36,6 +36,12 @@ interface CountryBallProps {
   identityVisible?: boolean;
   /** Επιτρέπεται μόνο έξω από απαντήσεις/κομμάτια παζλ. */
   playful?: boolean;
+  /** Πάτημα που χειρίζεται ο γονέας (π.χ. Αυλή με σύρσιμο, κουμπί Συλλογής): κάθε αύξηση = ένα πάτημα. */
+  tapSignal?: number;
+  /** Παρατεταμένο πάτημα που χειρίζεται ο γονέας: κάθε αύξηση = αγκαλιά. */
+  hugSignal?: number;
+  /** Το πρώτο πάτημα ενός σερί μένει «σιωπηλό» (π.χ. στη Συλλογή δείχνει το «Ήξερες ότι…»). */
+  quietFirstTap?: boolean;
 }
 
 /** Ντετερμινιστική «τυχαιότητα» από το iso2 — ίδια χώρα, ίδιος χαρακτήρας */
@@ -150,6 +156,9 @@ export function CountryBall({
   speechEnabled = true,
   identityVisible = false,
   playful = false,
+  tapSignal,
+  hugSignal,
+  quietFirstTap = false,
 }: CountryBallProps) {
   const rootRef = useRef<HTMLDivElement>(null);
   const reactions = useReactions();
@@ -164,7 +173,8 @@ export function CountryBall({
   useEffect(() => () => { clearTimeout(touchTimer.current); clearTimeout(clearTouchTimer.current); }, []);
   const reactToTouch = (longPress: boolean) => {
     const now = Date.now();
-    tapHistory.current = longPress ? [] : [...tapHistory.current.filter(t => now - t < 1100), now];
+    tapHistory.current = longPress ? [] : nextTapStreak(tapHistory.current, now);
+    if (!longPress && quietFirstTap && tapHistory.current.length === 1) return;
     const reaction = touchReaction(tapHistory.current.length, longPress);
     setTouch({ mood: reaction.mood, line: reaction.line, sequence: now });
     clearTimeout(clearTouchTimer.current);
@@ -182,6 +192,16 @@ export function CountryBall({
     clearTimeout(touchTimer.current);
     if (!longFired.current) reactToTouch(false);
   };
+  // Πατήματα που μετρά ο γονέας (Αυλή/Συλλογή): ίδιο σερί και ίδιες αντιδράσεις με το άμεσο άγγιγμα.
+  const lastTap = useRef(tapSignal), lastHug = useRef(hugSignal);
+  useEffect(() => {
+    if (tapSignal === undefined || tapSignal === lastTap.current) return;
+    lastTap.current = tapSignal; reactToTouch(false);
+  }, [tapSignal]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    if (hugSignal === undefined || hugSignal === lastHug.current) return;
+    lastHug.current = hugSignal; reactToTouch(true);
+  }, [hugSignal]); // eslint-disable-line react-hooks/exhaustive-deps
   const { settings } = useSettings();
   useEffect(() => {
     const element = rootRef.current;

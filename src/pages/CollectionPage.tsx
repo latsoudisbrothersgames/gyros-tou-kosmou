@@ -21,6 +21,7 @@ export function CollectionPage() {
   const collection = useMemo(() => loadCollection(), []);
   const [filter, setFilter] = useState<Filter>('all');
   const [greeting, setGreeting] = useState<string | null>(null);
+  const [taps, setTaps] = useState<Record<string, number>>({});
   const greetingTimers = useRef<ReturnType<typeof setTimeout>[]>([]);
   useEffect(() => () => greetingTimers.current.forEach(clearTimeout), []);
 
@@ -105,8 +106,8 @@ export function CollectionPage() {
               style={continentVars(c.continent)}
             >
               <button type="button" className="collection__tap" aria-label={`Παίξε με τη φιγούρα: ${c.nameGreek}`}
-                onClick={event => tap(c.iso2, event.currentTarget)}>
-                <CountryBall country={c} size={84} identityVisible />
+                onClick={event => { tap(c.iso2, event.currentTarget); setTaps(v => ({ ...v, [c.iso2]: (v[c.iso2] ?? 0) + 1 })); }}>
+                <CountryBall country={c} size={84} identityVisible tapSignal={taps[c.iso2] ?? 0} quietFirstTap />
               </button>
               {greeting === c.iso2 && <span className="collection__neighbor" role="status">Γεια σου γείτονα!</span>}
               <Link to={`/country/${c.iso2}`} className="collection__name">{c.nameGreek}</Link>
