@@ -6,6 +6,8 @@ import { useBallReaction } from '../../reactions/useBallReaction';
 import type { BallMood } from '../../reactions/events';
 export type { BallMood } from '../../reactions/events';
 import { SpeechBubble } from '../SpeechBubble/SpeechBubble';
+import { BALL_ACCESSORIES } from '../../data/ballAccessories';
+import { BallAccessory } from './BallAccessory';
 import { BORDERS } from '../../data/borders';
 import { touchReaction } from '../../reactions/touch';
 import { vibrate } from '../../utils/haptics';
@@ -326,6 +328,8 @@ export function CountryBall({
           <circle cx="50" cy="52" r="46" fill="none" stroke="rgba(8,33,56,0.55)" strokeWidth="2.5" />
           {/* Λευκό περίγραμμα αυτοκόλλητου — «συλλεκτικό» φινίρισμα */}
           <circle cx="50" cy="52" r="48.4" fill="none" stroke="#ffffff" strokeWidth="2.8" opacity="0.9" />
+
+          {identity && BALL_ACCESSORIES[country.iso2] && <BallAccessory accessory={BALL_ACCESSORIES[country.iso2]} />}
 
           {/* Μαγουλάκια */}
           {(ch.blush || mood === 'shy') && (
