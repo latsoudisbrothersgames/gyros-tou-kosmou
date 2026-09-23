@@ -115,7 +115,7 @@ check(!validComparison({ ...a, population: Infinity }, b, 'population', 'hard'),
 check(!validComparison({ ...a, population: 114 }, { ...b, population: 100 }, 'population', 'hard'), 'close pair excluded');
 check(validComparison({ ...a, population: 115 }, { ...b, population: 100 }, 'population', 'hard'), '15 percent boundary included');
 
-const { makeNeighborsPuzzle } = await import('../src/game/neighborsPuzzles');
+const { makeNeighborsPuzzle, rankedNeighborTraps } = await import('../src/game/neighborsPuzzles');
 const { landNeighbors } = await import('../src/data/borders');
 const { scoreNeighbors } = await import('../src/game/scoring');
 check(scoreNeighbors(4, 0, 0, 0) === 100, 'neighbors perfect');
@@ -131,6 +131,13 @@ for (const difficulty of ['easy', 'medium', 'hard'] as const) {
     check(difficulty !== 'easy' || p.host.tier === 1 && p.totalNeighbors >= 2 && p.totalNeighbors <= 5, 'neighbor easy pool');
   }
 }
+for (const host of ALL_COUNTRIES.filter(c => !['xk', 'ps', 'tw', 'ma', 'mr'].includes(c.iso2)).slice(0, 20)) {
+  const puzzle = makeNeighborsPuzzle('hard', host.iso2);
+  const needed = puzzle.guests.length - puzzle.correct.length;
+  const closest = new Set(rankedNeighborTraps(host.iso2).slice(0, needed).map(c => c.iso2));
+  check(puzzle.guests.filter(c => !puzzle.correct.includes(c.iso2)).every(c => closest.has(c.iso2)), `closest neighbor traps ${host.iso2}`);
+}
+check(!makeNeighborsPuzzle('easy', 'gr').guests.some(c => c.iso2 === 'ee'), 'Greek traps stay local');
 
 const { makePostPuzzle, reachableRoutes, travelOptions, postConstraintMet, longerPostRoute } = await import('../src/game/postPuzzles');
 const { scorePost } = await import('../src/game/scoring');

@@ -1,6 +1,7 @@
 import { ALL_COUNTRIES, getCountryByIsoCode } from '../data/countries';
 import { BORDERS, landNeighbors } from '../data/borders';
 import { TRAVEL_LINKS } from '../data/links';
+import { CENTROIDS } from '../data/centroids';
 import { shuffle } from './questionGenerator';
 import type { Country } from '../types/country';
 import type { DifficultyId } from '../types/game';
@@ -8,6 +9,26 @@ import type { DifficultyId } from '../types/game';
 const SKIP = new Set(['xk', 'ps', 'tw', 'ma', 'mr']);
 export interface NeighborsPuzzle {
   host: Country; guests: Country[]; correct: string[]; totalNeighbors: number;
+}
+function centroidDistance(a: string, b: string): number {
+  const [lon1, lat1] = CENTROIDS[a], [lon2, lat2] = CENTROIDS[b];
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const s = Math.sin(dLat / 2) ** 2 + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon / 2) ** 2;
+  return 2 * 6371 * Math.asin(Math.min(1, Math.sqrt(s)));
+}
+/** Local candidates first; distance breaks ties and supplies only the needed fallback. */
+export function rankedNeighborTraps(hostId: string): Country[] {
+  const real = BORDERS[hostId] ?? [];
+  const near = new Set([
+    ...real.flatMap(id => BORDERS[id] ?? []),
+    ...TRAVEL_LINKS.filter(l => l.kind === 'sea' && (l.a === hostId || l.b === hostId))
+      .map(l => l.a === hostId ? l.b : l.a),
+  ]);
+  return ALL_COUNTRIES.filter(c => c.iso2 !== hostId && !SKIP.has(c.iso2) && !real.includes(c.iso2))
+    .sort((a, b) => Number(near.has(b.iso2)) - Number(near.has(a.iso2))
+      || centroidDistance(hostId, a.iso2) - centroidDistance(hostId, b.iso2)
+      || a.iso2.localeCompare(b.iso2));
 }
 export function makeNeighborsPuzzle(difficulty: DifficultyId, focus?: string): NeighborsPuzzle {
   const includeSpecial = difficulty !== 'easy';
@@ -21,12 +42,7 @@ export function makeNeighborsPuzzle(difficulty: DifficultyId, focus?: string): N
   const real = landNeighbors(host.iso2, includeSpecial).filter(id => !SKIP.has(id));
   const slots = { easy: 6, medium: 7, hard: 8 }[difficulty];
   const correct = shuffle(real).slice(0, Math.min(real.length, difficulty === 'hard' ? 5 : slots - 2));
-  const near = new Set([
-    ...real.flatMap(id => BORDERS[id] ?? []),
-    ...TRAVEL_LINKS.filter(l => l.a === host.iso2 || l.b === host.iso2).map(l => l.a === host.iso2 ? l.b : l.a),
-  ]);
-  const traps = shuffle(ALL_COUNTRIES.filter(c => c.iso2 !== host.iso2 && !SKIP.has(c.iso2)
-    && !BORDERS[host.iso2].includes(c.iso2) && (near.has(c.iso2) || c.continent === host.continent)));
+  const traps = rankedNeighborTraps(host.iso2);
   const guests = shuffle([...correct.map(id => getCountryByIsoCode(id)!), ...traps.slice(0, slots - correct.length)]);
   return { host, guests, correct, totalNeighbors: real.length };
 }
