@@ -17,6 +17,8 @@ await withPreview(async ({ page }) => {
   const shot = (name) => page.screenshot({ path: `tools/shots/mode-${name}.png`, fullPage: true, animations: 'allow' });
   async function noLeak(mode) {
     assert.equal(await round().getAttribute('data-answered'), 'false');
+    assert.equal(await page.locator('[data-accessory]').count(), 0, `${mode}: πρόωρο αξεσουάρ`);
+    assert.equal(await page.locator('.countryball .speech-bubble').filter({ hasText: /Γεια! Είμαι|Γεια σου γείτονα|Ήξερες ότι/ }).count(), 0, `${mode}: πρόωρη ατάκα`);
     assert.equal(await round().getAttribute('data-answer'), null, 'Η λύση δεν γράφεται πριν την απάντηση');
     assert.equal(await round().locator('.new-mode__choice--correct, .new-mode__choice--wrong, .bigger__value, .bigger__winner').count(), 0);
     if (mode !== 'parade') {

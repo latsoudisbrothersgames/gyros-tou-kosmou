@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type PointerEvent } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type PointerEvent } from 'react';
 import { Link } from 'react-router-dom';
 import { CountryBall, type BallMood } from '../components/CountryBall/CountryBall';
 import { SpeechBubble } from '../components/SpeechBubble/SpeechBubble';
@@ -23,12 +23,12 @@ export function YardPage() {
   const [moods, setMoods] = useState<Record<string, BallMood>>({});
   const [bubble, setBubble] = useState<{ index: number; sequence: number } | null>(null);
   const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
-  const temporaryMood = (index: number, mood: BallMood, duration = 1000) => {
+  const temporaryMood = useCallback((index: number, mood: BallMood, duration = 1000) => {
     const iso2 = owned[index]?.iso2;
     if (!iso2) return;
     setMoods(prev => ({ ...prev, [iso2]: mood }));
     timers.current.push(setTimeout(() => setMoods(prev => { const next = { ...prev }; delete next[iso2]; return next; }), duration));
-  };
+  }, [owned]);
   useEffect(() => () => timers.current.forEach(clearTimeout), []);
   useEffect(() => {
     if (reduced || !owned.length) return;
@@ -62,6 +62,9 @@ export function YardPage() {
             b.x += b.vx * dt; b.y += b.vy * dt;
             b.vx *= .998; b.vy *= .998;
             // Απαλό ελατήριο κρατά τις μπάλες μέσα στον χώρο.
+            if ((b.x < 0 || b.x > width() - DIAMETER || b.y < 0 || b.y > height() - DIAMETER) && Math.hypot(b.vx, b.vy) > 2 && time - b.bumpedAt > 2400) {
+              b.bumpedAt = time; temporaryMood(i, 'disappointed', 750);
+            }
             if (b.x < 0 || b.x > width() - DIAMETER) b.vx += (Math.max(0, Math.min(width() - DIAMETER, b.x)) - b.x) * .055 * dt;
             if (b.y < 0 || b.y > height() - DIAMETER) b.vy += (Math.max(0, Math.min(height() - DIAMETER, b.y)) - b.y) * .055 * dt;
             b.x = Math.max(-8, Math.min(width() - DIAMETER + 8, b.x));
@@ -80,7 +83,7 @@ export function YardPage() {
           if (relative < 0) { const impulse = -relative * .75; a.vx -= nx * impulse; a.vy -= ny * impulse; b.vx += nx * impulse; b.vy += ny * impulse; }
           if (time - a.bumpedAt > 2400 && time - b.bumpedAt > 2400) {
             a.bumpedAt = b.bumpedAt = time;
-            temporaryMood(i, 'surprised', 650); temporaryMood(j, 'giggle', 650);
+            temporaryMood(i, 'confused', 650); temporaryMood(j, 'giggle', 650);
           }
         }
       }
@@ -88,7 +91,7 @@ export function YardPage() {
     };
     frame = requestAnimationFrame(draw);
     return () => { cancelAnimationFrame(frame); observer.disconnect(); };
-  }, [owned, reduced]);
+  }, [owned, reduced, temporaryMood]);
   const down = (event: PointerEvent<HTMLDivElement>, index: number) => {
     if (reduced) { temporaryMood(index, 'love', 1400); setBubble({ index, sequence: Date.now() }); return; }
     const b = bodies.current[index]; if (!b) return;

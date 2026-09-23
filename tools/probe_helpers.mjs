@@ -1,6 +1,6 @@
 import { spawn, execFileSync } from 'node:child_process';
 import { once } from 'node:events';
-import { chromium } from 'playwright-core';
+import { chromium, webkit } from 'playwright-core';
 
 export const base = 'http://127.0.0.1:4173/gyros-tou-kosmou/';
 export async function withPreview(run) {
@@ -17,7 +17,9 @@ export async function withPreview(run) {
       if (attempt >= 100) throw new Error(`Ο preview δεν ξεκίνησε: ${output}`);
       await new Promise((resolve) => setTimeout(resolve, 100));
     }
-    browser = await chromium.launch({ channel: 'chrome', headless: true });
+    browser = process.env.PROBE_ENGINE === 'webkit'
+      ? await webkit.launch({ headless: true })
+      : await chromium.launch({ channel: 'chrome', headless: true });
     const context = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, serviceWorkers: 'allow' });
     const page = await context.newPage();
     page.setDefaultTimeout(15000);

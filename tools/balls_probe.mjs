@@ -65,10 +65,42 @@ await withPreview(async ({ page }) => {
   await page.waitForFunction(() => !document.querySelector('.atlas .speech-bubble'));
   console.log('PASS Γεια! → quick fact → εξαφάνιση');
 
+  const playful = page.locator('.atlas__ball .countryball');
+  const tap = async () => { await playful.dispatchEvent('pointerdown'); await playful.dispatchEvent('pointerup'); };
+  await tap();
+  await playful.locator('.speech-bubble').filter({ hasText: 'Χι χι!' }).waitFor();
+  await shot('tap-one');
+  await tap(); await tap();
+  await page.locator('.atlas__ball .countryball--giggle').waitFor();
+  await playful.locator('.speech-bubble').filter({ hasText: 'με γαργαλάς' }).waitFor();
+  await shot('tap-three');
+  await tap(); await tap(); await tap();
+  await page.locator('.atlas__ball .countryball--dizzy').waitFor();
+  await shot('tap-six');
+  await playful.dispatchEvent('pointerdown');
+  await page.waitForTimeout(650);
+  await playful.dispatchEvent('pointerup');
+  await page.locator('.atlas__ball .countryball--love').waitFor();
+  await shot('long-press');
+
   await page.goto(`${base}#/collection`);
   await page.locator('.collection__tap .countryball[data-iso2="gr"]').click();
   await page.locator('.collection .speech-bubble').filter({ hasText: 'Ήξερες ότι…' }).waitFor();
   console.log('PASS πάτημα συλλογής → στοιχείο εγκυκλοπαίδειας');
+
+  // Αυλή: οκτώ κερδισμένες μπάλες, σύρσιμο και εκτόξευση.
+  await page.evaluate(() => localStorage.setItem('geographyGame:collection:v1', JSON.stringify(['gr','al','bg','it','fr','de','es','pt'])));
+  await page.goto(`${base}#/yard`);
+  await page.locator('.yard__friend').first().waitFor();
+  assert.equal(await page.locator('.yard__friend').count(), 8);
+  const friend = page.locator('.yard__friend').first();
+  const before = await friend.getAttribute('style');
+  const box = await friend.boundingBox();
+  await page.mouse.move(box.x + 30, box.y + 30); await page.mouse.down();
+  await page.mouse.move(box.x + 105, box.y + 65, { steps: 8 }); await page.mouse.up();
+  await page.waitForTimeout(250);
+  assert.notEqual(await friend.getAttribute('style'), before);
+  await shot('yard-drag');
 
   // Έλεγχος ρυθμίσεων, ορίου και ματιών με γεμάτη συλλογή σε καθαρό context.
   await page.evaluate(() => {

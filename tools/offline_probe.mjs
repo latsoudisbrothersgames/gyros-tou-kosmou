@@ -28,7 +28,7 @@ await withPreview(async ({ context, page }) => {
     ['αρχική', '/', '.home'], ['παιχνίδια', '/games', '.games__grid'],
     ['κουίζ', '/play/country', '.question-card'], ['χάρτης', '/map', '.worldmap'],
     ['εγκυκλοπαίδεια', '/encyclopedia', '.encyclopedia'], ['Ελλάδα', '/country/gr', '.atlas'],
-    ['συλλογή', '/collection', '.collection'],
+    ['συλλογή', '/collection', '.collection'], ['αυλή', '/yard', '.yard'],
     ['ποιος είμαι', '/play/whoami?focus=jp', '.new-mode__round'],
     ['παρέλαση', '/play/parade?focus=jp', '.new-mode__round'],
     ['μεγαλύτερη', '/play/bigger?focus=jp', '.new-mode__round'],
@@ -40,7 +40,7 @@ await withPreview(async ({ context, page }) => {
     try {
       await page.goto(`${base}#${route}`);
       await page.locator(selector).first().waitFor();
-      if (!route.startsWith('/play/neighbors') && !route.startsWith('/play/post') && !route.startsWith('/play/puzzle')) await loadedFlag(page);
+      if (route !== '/yard' && !route.startsWith('/play/neighbors') && !route.startsWith('/play/post') && !route.startsWith('/play/puzzle')) await loadedFlag(page);
       if (route === '/play/country') {
         const before = await page.locator('.question-card').getAttribute('data-question-id');
         await page.locator('.choice').first().click();

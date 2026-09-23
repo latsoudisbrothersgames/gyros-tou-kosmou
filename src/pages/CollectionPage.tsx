@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { BORDERS } from '../data/borders';
+import { canGreet } from '../reactions/social';
 import { ALL_COUNTRIES } from '../data/countries';
 import { CONTINENT_LABELS, type ContinentId } from '../types/country';
 import { continentVars } from '../theme/continents';
@@ -36,12 +36,16 @@ export function CollectionPage() {
     return [...list].sort((a, b) => a.nameGreek.localeCompare(b.nameGreek, 'el'));
   }, [filter]);
 
-  const tap = (iso2: string) => {
+  const tap = (iso2: string, button: HTMLButtonElement) => {
     reactions?.emit({ type: 'collection:tap', iso2 });
     greetingTimers.current.forEach(clearTimeout); greetingTimers.current = [];
     setGreeting(null);
-    const index = countries.findIndex(c => c.iso2 === iso2);
-    const neighbor = [countries[index - 1], countries[index + 1]].find(c => c && collection.has(c.iso2) && BORDERS[iso2]?.includes(c.iso2));
+    const current = button.querySelector<HTMLElement>('.countryball');
+    const nearby = [...(button.closest('.collection__grid')?.querySelectorAll<HTMLElement>('.collection__item--owned .countryball[data-identity-visible="true"]') ?? [])];
+    const neighbor = nearby.find(ball => ball !== current && ball.dataset.iso2 && current &&
+      canGreet(iso2, ball.dataset.iso2, true, true) && Math.hypot(
+        ball.getBoundingClientRect().x - current.getBoundingClientRect().x,
+        ball.getBoundingClientRect().y - current.getBoundingClientRect().y) < 180);
     if (neighbor) {
       greetingTimers.current.push(setTimeout(() => setGreeting(iso2), 3000));
       greetingTimers.current.push(setTimeout(() => setGreeting(null), 5800));
@@ -101,7 +105,7 @@ export function CollectionPage() {
               style={continentVars(c.continent)}
             >
               <button type="button" className="collection__tap" aria-label={`Παίξε με τη φιγούρα: ${c.nameGreek}`}
-                onClick={() => tap(c.iso2)}>
+                onClick={event => tap(c.iso2, event.currentTarget)}>
                 <CountryBall country={c} size={84} identityVisible />
               </button>
               {greeting === c.iso2 && <span className="collection__neighbor" role="status">Γεια σου γείτονα!</span>}

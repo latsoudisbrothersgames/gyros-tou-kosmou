@@ -8,7 +8,7 @@ export type { BallMood } from '../../reactions/events';
 import { SpeechBubble } from '../SpeechBubble/SpeechBubble';
 import { BALL_ACCESSORIES } from '../../data/ballAccessories';
 import { BallAccessory } from './BallAccessory';
-import { BORDERS } from '../../data/borders';
+import { canGreet } from '../../reactions/social';
 import { touchReaction } from '../../reactions/touch';
 import { vibrate } from '../../utils/haptics';
 import { useSettings } from '../../context/SettingsContext';
@@ -202,7 +202,7 @@ export function CountryBall({
         other.getBoundingClientRect().x - root.getBoundingClientRect().x,
         other.getBoundingClientRect().y - root.getBoundingClientRect().y) < 180);
     const greet = () => {
-      const neighbor = nearby().find(other => BORDERS[country.iso2]?.includes(other.dataset.iso2 ?? ''));
+      const neighbor = nearby().find(other => canGreet(country.iso2, other.dataset.iso2 ?? '', identity, other.dataset.identityVisible === 'true'));
       if (!neighbor) return;
       root.style.setProperty('--cb-look-x', neighbor.getBoundingClientRect().x > root.getBoundingClientRect().x ? '2px' : '-2px');
       if (country.iso2 < (neighbor.dataset.iso2 ?? '')) {
@@ -225,25 +225,28 @@ export function CountryBall({
   }, [live, identity, country.iso2, reactions]);
   useEffect(() => {
     if (!live || explicitMood !== undefined || settings.reducedMotion || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const root = rootRef.current;
     const rand = makeSeededRandom(uid);
     let timer: ReturnType<typeof setTimeout>;
     let end: ReturnType<typeof setTimeout>;
+    let yawnTimer: ReturnType<typeof setTimeout>;
     let cancelled = false;
     const cycle = () => {
       const choice = rand(0, 1);
       const next: BallMood | null = choice < .48 ? null : choice < .76 ? 'curious' : choice < .92 ? 'sleepy' : 'surprised';
       if (next === null) {
-        const root = rootRef.current;
         root?.style.setProperty('--cb-look-x', `${rand(-2, 2).toFixed(1)}px`);
         end = setTimeout(() => root?.style.setProperty('--cb-look-x', '0px'), 900);
       } else {
+        if (next === 'sleepy') { root?.classList.add('countryball--yawn');
+          yawnTimer = setTimeout(() => root?.classList.remove('countryball--yawn'), 420); }
         setMicroMood(next);
         end = setTimeout(() => { if (!cancelled) setMicroMood(null); }, next === 'sleepy' ? 1400 : 650);
       }
       timer = setTimeout(cycle, rand(8000, 12000));
     };
     timer = setTimeout(cycle, rand(8000, 12000));
-    return () => { cancelled = true; clearTimeout(timer); clearTimeout(end); };
+    return () => { cancelled = true; clearTimeout(timer); clearTimeout(end); clearTimeout(yawnTimer); root?.classList.remove('countryball--yawn'); };
   }, [live, explicitMood, settings.reducedMotion, uid]);
   const flagUrl = concealed ? undefined : getFlagUrl(country.iso2);
   const clipId = `cb-clip-${uid}`;
@@ -266,6 +269,7 @@ export function CountryBall({
 
   return (
     <div ref={rootRef} onPointerDown={pointerDown} onPointerUp={pointerUp} onPointerCancel={() => clearTimeout(touchTimer.current)}
+      onContextMenu={playful ? event => event.preventDefault() : undefined}
       onKeyDown={playful ? event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); reactToTouch(false); } } : undefined}
       role={playful ? 'button' : undefined} tabIndex={playful ? 0 : undefined} aria-label={playful ? 'Παίξε με τη φιγούρα' : undefined} data-iso2={identity ? country.iso2 : undefined} data-identity-visible={identity} data-live={live} className={`countryball ${moodClass} ${social?.clap ? 'countryball--clap' : ''} ${!live ? 'countryball--static' : ''} ${className}`} style={ballStyle}>
       {!touch && social?.line && <SpeechBubble lines={[social.line]} voiceIso2={country.iso2} />}

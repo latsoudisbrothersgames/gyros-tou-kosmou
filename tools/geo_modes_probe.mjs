@@ -1,16 +1,11 @@
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
 import { mkdirSync } from 'node:fs';
-import { feature } from 'topojson-client';
-import topo from 'world-atlas/countries-50m.json' with { type: 'json' };
 import { base, withPreview } from './probe_helpers.mjs';
 
 const data = JSON.parse(execFileSync(process.execPath, ['--import', './scripts/register_ts.mjs', '--input-type=module', '-e',
   "import {ALL_COUNTRIES} from './src/data/countries.ts'; import {BORDERS} from './src/data/borders.ts'; import {SPECIAL_BORDERS} from './src/data/borderOverrides.ts'; import {TRAVEL_LINKS} from './src/data/links.ts'; import {ATLAS_PUZZLES} from './src/data/puzzles.ts'; console.log(JSON.stringify({countries:ALL_COUNTRIES,borders:BORDERS,special:SPECIAL_BORDERS,links:TRAVEL_LINKS,puzzles:ATLAS_PUZZLES}))"], { encoding: 'utf8' }));
 const byIso = new Map(data.countries.map(c => [c.iso2, c]));
-const byNumeric = new Map(data.countries.map(c => [c.isoNumeric, c.iso2]));
-const geometries = feature(topo, topo.objects.countries).features;
-const byFeature = new Map(geometries.map(f => [byNumeric.get(String(f.id)), f]));
 const skip = new Set(['xk','ps','tw','ma','mr']);
 const special = new Set(data.special.map(e => [e.a, e.b].sort().join('-')));
 const options = (a, b, easy) => {
@@ -64,6 +59,8 @@ await withPreview(async ({ page }) => {
   };
   const basicNoLeak = async mode => {
     assert.equal(await round().getAttribute('data-answered'), 'false');
+    assert.equal(await page.locator('[data-accessory]').count(), 0, `${mode}: πρόωρο αξεσουάρ`);
+    assert.equal(await page.locator('.countryball .speech-bubble').filter({ hasText: /Γεια! Είμαι|Γεια σου γείτονα|Ήξερες ότι/ }).count(), 0, `${mode}: πρόωρη ατάκα`);
     assert.equal(await round().getAttribute('data-answer'), null);
     assert.equal(await round().locator('[data-correct], [data-target]').count(), 0);
     assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), `${mode}: οριζόντια υπερχείλιση`);
@@ -73,14 +70,18 @@ await withPreview(async ({ page }) => {
   for (let i = 0; i < 3; i++) {
     await basicNoLeak('neighbors');
     const previous = await round().getAttribute('data-round');
-    const host = await round().locator('.neighbors__house .countryball').getAttribute('data-iso2');
-    const guests = await round().locator('.neighbors__guest').evaluateAll(nodes => nodes.map(n => n.querySelector('.countryball')?.dataset.iso2));
+    const prompt = await round().locator('p').first().innerText();
+    const host = data.countries.find(c => prompt.includes(c.nameGreekAccusative))?.iso2;
+    assert.ok(host, 'Δεν βρέθηκε ο ορατός οικοδεσπότης');
+    const guestNames = await round().locator('.neighbors__guest > span').allInnerTexts();
+    const guests = guestNames.map(name => data.countries.find(c => c.nameGreek === name)?.iso2);
+    assert.ok(guests.every(Boolean));
     const right = guests.filter(id => data.borders[host].includes(id) && !special.has([host,id].sort().join('-')));
     assert.equal(await round().locator('.neighbors__guest--right, .neighbors__guest--wrong').count(), 0);
     assert.equal(await round().locator('path[stroke="#f06049"]').count(), 0);
     if (i === 0) await shot('neighbors-before');
     const chosen = i === 1 ? guests.filter(id => !right.includes(id)).slice(0, 1) : right;
-    for (const id of chosen) await round().locator('.neighbors__guest').filter({ has: page.locator(`.countryball[data-iso2="${id}"]`) }).click();
+    for (const id of chosen) await round().locator('.neighbors__guest').nth(guests.indexOf(id)).click();
     assert.equal(await round().locator('.neighbors__guest--right').count(), 0);
     await round().getByRole('button', { name: 'Άνοιξε την πόρτα' }).click();
     await page.waitForFunction(() => document.querySelector('.new-mode__round')?.dataset.answered === 'true');
@@ -98,7 +99,11 @@ await withPreview(async ({ page }) => {
     const previous = await round().getAttribute('data-round');
     assert.equal(await round().locator('polyline').count(), 0);
     assert.ok(!(await round().innerText()).includes('Η πιο σύντομη:'));
-    const balls = await round().locator('.post__characters .countryball').evaluateAll(nodes => nodes.map(n => n.dataset.iso2));
+    const intro = await round().locator('p').first().innerText();
+    const sender = data.countries.find(c => intro.includes(`${c.nameGreek} στέλνει`));
+    const receiver = data.countries.find(c => intro.includes(`δέμα ${c.nameGreekAccusative.replace(/^(την|τη|τον|το|τις|τους|τα) /, m => ({την:'στην ',τη:'στη ',τον:'στον ',το:'στο ',τις:'στις ',τους:'στους ',τα:'στα '})[m.trim()] ?? m)}`));
+    assert.ok(sender && receiver, 'Δεν αναγνωρίστηκαν οι ορατοί σταθμοί');
+    const balls = [sender.iso2, receiver.iso2];
     const ticketsText = await round().locator('.post__tickets span').allInnerTexts();
     const tickets = Object.fromEntries(['land','sea','air'].map((k, j) => [k, Number(ticketsText[j].match(/×\s*(\d+)/)[1])]));
     let solution = solve(balls[0], balls[1], tickets, false);

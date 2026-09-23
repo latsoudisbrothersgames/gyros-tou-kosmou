@@ -214,10 +214,12 @@
 .countryball--love { animation: countryball-proud 1.4s ease-in-out infinite; }
 @keyframes countryball-face-in { from { opacity: 0; transform: translateY(2px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes countryball-dizzy { 50% { transform: rotate(13deg) scale(.96); } }
-@keyframes countryball-giggle { 50% { transform: translateY(-3px) rotate(3deg); } }
+@keyframes countryball-giggle { 0%, 100% { transform: scale(1); } 30% { transform: scale(1.1, .9); } 60% { transform: translateY(-3px) rotate(3deg) scale(.96, 1.05); } }
 
 .countryball[role="button"] { cursor: pointer; touch-action: manipulation; }
 .countryball[role="button"]:focus-visible { outline: 3px solid var(--ocean-500); outline-offset: 3px; border-radius: 50%; }
 .countryball[role="button"]:active { transform: scale(1.08, .9); }
 
 .countryball--clap .countryball__hand { animation: countryball-hand .24s ease-in-out 4 alternate; }
+
+.countryball--yawn .countryball__mouth { transform: scaleY(1.55); transform-origin: 50px 66px; }
