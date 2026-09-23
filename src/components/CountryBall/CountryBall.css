@@ -223,3 +223,13 @@
 .countryball--clap .countryball__hand { animation: countryball-hand .24s ease-in-out 4 alternate; }
 
 .countryball--yawn .countryball__mouth { transform: scaleY(1.55); transform-origin: 50px 66px; }
+
+/* Character props move independently of the flag. SVG shapes stay fixed. */
+.countryball__accessory { transform-box: fill-box; transform-origin: center; }
+.countryball--celebrate .countryball__accessory,
+.countryball--excited .countryball__accessory { animation: accessory-bounce .4s ease-in-out infinite alternate; }
+.countryball--sleepy .countryball__accessory--hat { transform: translate(-4px, 13px) rotate(-20deg); }
+.countryball--sleepy .countryball__accessory--held { transform: translateY(5px) rotate(12deg); }
+.countryball--dizzy .countryball__accessory { animation: accessory-spin .65s linear 3; }
+@keyframes accessory-bounce { to { transform: translateY(-7px) rotate(12deg); } }
+@keyframes accessory-spin { to { transform: rotate(360deg); } }
