@@ -179,5 +179,37 @@ check(puzzleForRound(0, 'gr').id === 'balkans', 'puzzle focus');
 check(scorePuzzle(4, 0, 0, 0) === 150, 'puzzle time bonus');
 check(scorePuzzle(5, 30, 200, 0) === 25, 'puzzle floor');
 check(scorePuzzle(6, 1, 120, 2) === 115, 'puzzle misdrop and streak');
+
+// Στάδιο 2 γειτόνων: η ίδια πραγματική γεωμετρία με το παιχνίδι.
+const { feature } = await import('topojson-client');
+const { default: atlas } = await import('world-atlas/countries-50m.json', { with: { type: 'json' } });
+const { getCountryByIsoNumeric } = await import('../src/data/countries');
+const { makeNeighborhoodPuzzle } = await import('../src/game/neighborhoodPuzzles');
+type Topology = import('../src/components/WorldMap/useWorldTopology').WorldTopology;
+const raw = atlas as unknown as Topology['raw'];
+const countries = (feature(raw, raw.objects.countries) as GeoJSON.FeatureCollection<GeoJSON.Geometry>).features.map(f => ({
+  feature: f, isoNumeric: String(f.id), iso2: getCountryByIsoNumeric(String(f.id))?.iso2,
+}));
+const topology: Topology = { raw, countries, availableIso2: new Set(countries.map(c => c.iso2).filter((id): id is string => !!id)) };
+for (const [difficulty, hostId, revealed, expected] of [
+  ['easy', 'gr', ['al', 'bg', 'mk', 'tr'], 3],
+  ['medium', 'gr', ['al', 'bg', 'mk', 'tr'], 4],
+  ['hard', 'cn', ['af', 'in', 'kg', 'kz', 'la', 'mn'], 6],
+] as const) {
+  const a = makeNeighborhoodPuzzle(hostId, difficulty, revealed, topology, 71);
+  const b = makeNeighborhoodPuzzle(hostId, difficulty, revealed, topology, 71);
+  check(!!a && a.pieces.length === expected, `neighborhood ${difficulty} count`);
+  check(JSON.stringify(a?.pieces) === JSON.stringify(b?.pieces), `neighborhood ${difficulty} deterministic`);
+  check(a?.pieces.every(p => landNeighbors(hostId, false).includes(p.id) && !borderKind(hostId, p.id)) ?? false,
+    `neighborhood ${difficulty} real ordinary borders`);
+  check(a?.pieces.every(p => p.d.length > 0 && p.width > 0 && p.height > 0) ?? false,
+    `neighborhood ${difficulty} geometry`);
+}
+check(makeNeighborhoodPuzzle('gr', 'easy', ['al', 'bg'], topology, 1) === null, 'too few revealed neighbors');
+check(makeNeighborhoodPuzzle('fr', 'hard', ['br', 'sr', 'nl', 'be', 'ch'], topology, 1) === null,
+  'special borders excluded before minimum');
+check(makeNeighborhoodPuzzle('ma', 'hard', ['dz', 'es', 'mr'], topology, 1) === null, 'disputed host excluded');
+check(!makeNeighborhoodPuzzle('rs', 'hard', ['xk', 'ba', 'bg', 'hu'], topology, 1)?.pieces.some(p => p.id === 'xk'),
+  'disputed piece excluded');
 console.log(fails === 0 ? 'ENGINE OK' : `${fails} failures`);
 process.exit(fails ? 1 : 0);
