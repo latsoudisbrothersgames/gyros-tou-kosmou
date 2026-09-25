@@ -117,10 +117,11 @@ check(validComparison({ ...a, population: 115 }, { ...b, population: 100 }, 'pop
 
 const { makeNeighborsPuzzle, rankedNeighborTraps } = await import('../src/game/neighborsPuzzles');
 const { landNeighbors, borderKind } = await import('../src/data/borders');
-const { scoreNeighbors } = await import('../src/game/scoring');
+const { scoreNeighbors, scoreNeighborhoodBonus } = await import('../src/game/scoring');
 check(scoreNeighbors(4, 0, 0, 0) === 100, 'neighbors perfect');
 check(scoreNeighbors(4, 0, 0, 3) === 130, 'neighbors streak');
 check(scoreNeighbors(1, 3, 2, 0) === 0, 'neighbors floor');
+check(scoreNeighborhoodBonus(0) === 0 && scoreNeighborhoodBonus(3) === 30, 'neighborhood bonus only for clean pieces');
 for (const difficulty of ['easy', 'medium', 'hard'] as const) {
   for (let i = 0; i < 200; i++) {
     const p = makeNeighborsPuzzle(difficulty);

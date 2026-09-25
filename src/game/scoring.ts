@@ -62,6 +62,11 @@ export function scoreNeighbors(correctPicked: number, missed: number, wrongPicke
   return Math.max(0, Math.round(100 * (total ? correctPicked / total : 0) - 20 * wrongPicked));
 }
 
+/** Μόνο πρόσθετοι πόντοι για κομμάτια που τοποθετήθηκαν χωρίς υπόδειξη. */
+export function scoreNeighborhoodBonus(withoutHint: number): number {
+  return 10 * Math.max(0, Math.trunc(withoutHint));
+}
+
 /** Παράδοση: σταθερή βάση, μπόνους συντομίας και σερί· μισοί πόντοι αν χαθεί ο περιορισμός. */
 export function scorePost(stepsUsed: number, minSteps: number, constraintMet: boolean, streak: number): number {
   const total = 100 + (stepsUsed === minSteps ? 25 : 0)

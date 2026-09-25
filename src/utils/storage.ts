@@ -5,6 +5,18 @@ import { readStorage, writeStorage } from '../hooks/useLocalStorage';
 /** Κλειδιά με έκδοση για μελλοντικές μεταφορές δεδομένων */
 export const SCORES_KEY = 'geographyGame:scores:v1';
 export const SETTINGS_KEY = 'geographyGame:settings:v1';
+export const NEIGHBORHOODS_KEY = 'geographyGame:neighborhoods:v1';
+
+export function loadNeighborhoodCount(): number {
+  return readStorage(NEIGHBORHOODS_KEY, 0, (value): value is number =>
+    typeof value === 'number' && Number.isSafeInteger(value) && value >= 0);
+}
+
+export function incrementNeighborhoodCount(): number {
+  const count = loadNeighborhoodCount() + 1;
+  writeStorage(NEIGHBORHOODS_KEY, count);
+  return count;
+}
 
 export const MAX_SCOREBOARD_ENTRIES = 20;
 export const MAX_PLAYER_NAME_LENGTH = 20;

@@ -82,6 +82,8 @@ export interface AnswerRecord {
   correct: boolean;
   /** Πόντοι που κερδήθηκαν σε αυτή την ερώτηση */
   pointsAwarded: number;
+  /** Προαιρετικό μπόνους του Σταδίου 2· δεν αλλάζει την αρχική απάντηση ή το σερί. */
+  bonusPoints?: number;
   timeMs: number;
   /** Η απάντηση ξεκλείδωσε τη φιγούρα της χώρας για ΠΡΩΤΗ φορά */
   discovered?: boolean;

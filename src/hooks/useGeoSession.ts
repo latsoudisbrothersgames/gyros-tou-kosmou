@@ -13,6 +13,7 @@ export function useGeoSession<T>(config: GameConfig, makeRound: (index: number) 
   const [state, setState] = useState(() => initial(config));
   const [answered, setAnswered] = useState(false);
   const locked = useRef(false);
+  const bonusAwarded = useRef(false);
   const started = useRef(performance.now());
   const total = totalOverride === undefined ? config.length === 'endless' ? null : config.length : totalOverride;
   const complete = (countryId: string, correct: boolean, points: number, collect: string[] = []) => {
@@ -31,18 +32,28 @@ export function useGeoSession<T>(config: GameConfig, makeRound: (index: number) 
     vibrate(correct ? 35 : [25, 60, 25]);
     return true;
   };
+  const awardBonus = (points: number) => {
+    if (!locked.current || bonusAwarded.current || state.finished) return false;
+    bonusAwarded.current = true;
+    const safePoints = Math.max(0, Math.trunc(points));
+    setState(prev => ({ ...prev, score: prev.score + safePoints,
+      answers: prev.answers.map((answer, index) => index === prev.answers.length - 1
+        ? { ...answer, bonusPoints: safePoints } : answer) }));
+    return true;
+  };
   const next = () => {
     if (!locked.current || state.finished) return;
     const index = state.questionIndex + 1;
     const finished = total !== null && index >= total;
     setState(prev => ({ ...prev, questionIndex: index, finished }));
-    if (!finished) { setRound(makeRound(index)); setAnswered(false); locked.current = false; started.current = performance.now(); }
+    if (!finished) { setRound(makeRound(index)); setAnswered(false); locked.current = false; bonusAwarded.current = false; started.current = performance.now(); }
   };
   const restart = () => {
     setRound(makeRound(0)); setState(initial(config)); setAnswered(false);
     locked.current = false; started.current = performance.now();
+    bonusAwarded.current = false;
   };
   const finish = () => { locked.current = true; setState(prev => ({ ...prev, finished: true })); };
-  return { round, state, answered, total, complete, next, restart, finish };
+  return { round, state, answered, total, complete, awardBonus, next, restart, finish };
 }
 export type GeoSession<T> = ReturnType<typeof useGeoSession<T>>;

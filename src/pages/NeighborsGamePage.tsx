@@ -3,7 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import { parseGameConfig } from './QuizGamePage';
 import { useGeoSession } from '../hooks/useGeoSession';
 import { makeNeighborsPuzzle } from '../game/neighborsPuzzles';
-import { scoreNeighbors } from '../game/scoring';
+import { scoreNeighbors, scoreNeighborhoodBonus } from '../game/scoring';
 import { borderKind } from '../data/borders';
 import { CountryBall } from '../components/CountryBall/CountryBall';
 import { SpeechBubble } from '../components/SpeechBubble/SpeechBubble';
@@ -17,6 +17,7 @@ import { playSound } from '../audio/soundManager';
 import { useWorldTopology } from '../components/WorldMap/useWorldTopology';
 import { makeNeighborhoodPuzzle } from '../game/neighborhoodPuzzles';
 import { NeighborhoodStage } from './NeighborhoodStage';
+import { incrementNeighborhoodCount } from '../utils/storage';
 
 export function NeighborsGamePage() {
   const [params] = useSearchParams();
@@ -52,7 +53,12 @@ function NeighborsRound({ session: s }: { session: ReturnType<typeof useGeoSessi
   };
   const special = answered ? correct.map(id => borderKind(host.iso2, id)).filter(Boolean) : [];
   if (stage === 'playing' && neighborhood) return <NeighborhoodStage puzzle={neighborhood} host={host}
-    difficulty={s.state.config.difficulty} onSkip={() => setStage('skipped')} onComplete={() => {}} />;
+    difficulty={s.state.config.difficulty} onSkip={() => setStage('skipped')}
+    onComplete={withoutHint => {
+      const bonus = scoreNeighborhoodBonus(withoutHint);
+      s.awardBonus(bonus);
+      return { bonus, count: incrementNeighborhoodCount() };
+    }} />;
   return <>
     <h1>Οι γείτονες χτυπούν την πόρτα</h1>
     <p>Ποιοι από τους καλεσμένους συνορεύουν με {host.nameGreekAccusative};</p>

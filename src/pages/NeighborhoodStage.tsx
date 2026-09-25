@@ -23,7 +23,7 @@ function initialPositions(puzzle: NeighborhoodPuzzle): Record<string, Position> 
 
 export function NeighborhoodStage({ puzzle, host, difficulty, onSkip, onComplete }: {
   puzzle: NeighborhoodPuzzle; host: Country; difficulty: DifficultyId;
-  onSkip: () => void; onComplete: (withoutHint: number, total: number) => void;
+  onSkip: () => void; onComplete: (withoutHint: number, total: number) => { bonus: number; count: number };
 }) {
   const svgRef = useRef<SVGSVGElement>(null);
   const drag = useRef<{ id: string; pointerId: number } | null>(null);
@@ -35,6 +35,7 @@ export function NeighborhoodStage({ puzzle, host, difficulty, onSkip, onComplete
   const [lastSnap, setLastSnap] = useState<string | null>(null);
   const [message, setMessage] = useState('');
   const [finished, setFinished] = useState(false);
+  const [reward, setReward] = useState<{ bonus: number; count: number } | null>(null);
   const reduced = useReducedMotion();
   const reactions = useReactions();
   const localPoint = (event: PointerEvent<SVGElement>) => {
@@ -76,7 +77,8 @@ export function NeighborhoodStage({ puzzle, host, difficulty, onSkip, onComplete
       if (next.length === puzzle.pieces.length) {
         const clean = next.filter(id => !hinted.includes(id)).length;
         setFinished(true);
-        onComplete(clean, next.length);
+        setReward(onComplete(clean, next.length));
+        if (clean === next.length) playSound('magic');
       }
     } else {
       setPositions(v => ({ ...v, [piece.id]: slotPosition(piece, puzzle.trayOrder.indexOf(piece.id)) }));
@@ -121,7 +123,7 @@ export function NeighborhoodStage({ puzzle, host, difficulty, onSkip, onComplete
       <div className="neighborhood__balls" aria-hidden="true">
         <div className="neighborhood__ball" style={{ left: '50%', top: `${((BOARD.y0 + BOARD.y1) / 2) / STAGE_H * 100}%` }}>
           <CountryBall country={host} size={42} identityVisible reactive={false} speechEnabled={false}
-            mood={finished ? 'celebrate' : lastSnap ? 'wave' : 'proud'} />
+            mood={finished ? hinted.length === 0 ? 'celebrate' : 'happy' : lastSnap ? 'wave' : 'proud'} />
         </div>
         {puzzle.pieces.map(piece => {
           const done = placed.includes(piece.id), pos = positions[piece.id];
@@ -129,7 +131,7 @@ export function NeighborhoodStage({ puzzle, host, difficulty, onSkip, onComplete
           const cy = done ? pos.y + piece.height / 2 : pos.y + piece.height * pos.scale;
           return <div key={piece.id} className="neighborhood__ball" style={{ left: `${cx / 360 * 100}%`, top: `${cy / STAGE_H * 100}%` }}>
             <CountryBall country={getCountryByIsoCode(piece.id)!} size={done ? 34 : 26} identityVisible reactive={false}
-              speechEnabled={false} mood={finished ? 'celebrate' : piece.id === lastSnap ? 'wave' : active === piece.id ? 'nervous' : 'idle'} />
+              speechEnabled={false} mood={finished ? hinted.length === 0 ? 'celebrate' : 'happy' : piece.id === lastSnap ? 'wave' : active === piece.id ? 'nervous' : 'idle'} />
           </div>;
         })}
       </div>
@@ -137,6 +139,7 @@ export function NeighborhoodStage({ puzzle, host, difficulty, onSkip, onComplete
     <p>Κομμάτια: {placed.length}/{puzzle.pieces.length}</p>
     {message && <div className="neighborhood__bubble"><SpeechBubble key={message + placed.length + (misses[active ?? ''] ?? 0)} lines={[message]} /></div>}
     {finished && <p role="status">Μπράβο! Έφτιαξες όλη τη γειτονιά.</p>}
+    {reward && <p role="status">⭐ +{reward.bonus} πόντοι μπόνους · Γειτονιές που έφτιαξες: {reward.count}</p>}
     {!finished && <Button variant="secondary" onClick={onSkip}>Παράλειψη</Button>}
   </div>;
 }
