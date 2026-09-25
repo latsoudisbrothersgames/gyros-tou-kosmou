@@ -23,6 +23,7 @@ export interface NeighborhoodPiece {
 export interface NeighborhoodPuzzle {
   hostId: string;
   anchor: string;
+  anchorCenter: [number, number];
   exterior: string;
   pieces: NeighborhoodPiece[];
   trayOrder: string[];
@@ -38,7 +39,7 @@ function direction(dx: number, dy: number): NeighborhoodPiece['direction'] {
   return Math.abs(dx) >= Math.abs(dy) ? dx >= 0 ? 'ανατολικά' : 'δυτικά' : dy >= 0 ? 'νότια' : 'βόρεια';
 }
 
-/** A pure round builder. Only Stage 1's revealed correct guests may enter this function. */
+/** A pure round builder. Call only after Stage 1 reveals the neighbors used for Stage 2. */
 export function makeNeighborhoodPuzzle(hostId: string, difficulty: DifficultyId,
   revealed: readonly string[], topology: WorldTopology, seed: number): NeighborhoodPuzzle | null {
   if (OMIT.has(hostId)) return null;
@@ -105,5 +106,5 @@ export function makeNeighborhoodPuzzle(hostId: string, difficulty: DifficultyId,
   const exterior = boardPath(mesh(topology.raw, subset, (a, b) => a === b)) ?? '';
   const borders = new Map(pieces.map(p => [p.id, boardPath(borderGeometry(hostId, p.id)) ?? '']));
   const trayOrder = pieces.map(p => p.id).sort((a, b) => hash(`${seed}:tray:${a}`) - hash(`${seed}:tray:${b}`));
-  return { hostId, anchor, exterior, pieces, trayOrder, borders };
+  return { hostId, anchor, anchorCenter: [hostCenter[0], hostCenter[1]], exterior, pieces, trayOrder, borders };
 }

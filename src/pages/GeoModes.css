@@ -63,6 +63,7 @@
 .puzzle__ball { position: absolute; transform: translate(-50%, -50%); pointer-events: none; }
 
 .neighborhood__wrap { position: relative; width: 100%; max-width: 450px; margin: 12px auto; }
+.neighborhood__preview { padding: 10px 12px; border-radius: 12px; background: #e8f6ed; text-align: left; }
 .neighborhood__stage { display: block; width: 100%; height: auto; }
 .neighborhood__piece { touch-action: none; cursor: grab; }
 .neighborhood__piece--placed { pointer-events: none; }

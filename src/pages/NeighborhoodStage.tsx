@@ -121,7 +121,8 @@ export function NeighborhoodStage({ puzzle, host, difficulty, onSkip, onComplete
         })}
       </svg>
       <div className="neighborhood__balls" aria-hidden="true">
-        <div className="neighborhood__ball" style={{ left: '50%', top: `${((BOARD.y0 + BOARD.y1) / 2) / STAGE_H * 100}%` }}>
+        <div className="neighborhood__ball" style={{ left: `${puzzle.anchorCenter[0] / 360 * 100}%`,
+          top: `${puzzle.anchorCenter[1] / STAGE_H * 100}%` }}>
           <CountryBall country={host} size={42} identityVisible reactive={false} speechEnabled={false}
             mood={finished ? hinted.length === 0 ? 'celebrate' : 'happy' : lastSnap ? 'wave' : 'proud'} />
         </div>

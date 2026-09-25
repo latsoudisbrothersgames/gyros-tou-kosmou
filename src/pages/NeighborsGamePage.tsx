@@ -4,7 +4,8 @@ import { parseGameConfig } from './QuizGamePage';
 import { useGeoSession } from '../hooks/useGeoSession';
 import { makeNeighborsPuzzle } from '../game/neighborsPuzzles';
 import { scoreNeighbors, scoreNeighborhoodBonus } from '../game/scoring';
-import { borderKind } from '../data/borders';
+import { borderKind, landNeighbors } from '../data/borders';
+import { getCountryByIsoCode } from '../data/countries';
 import { CountryBall } from '../components/CountryBall/CountryBall';
 import { SpeechBubble } from '../components/SpeechBubble/SpeechBubble';
 import { RegionalMap } from '../components/RegionalMap/RegionalMap';
@@ -37,8 +38,8 @@ function NeighborsRound({ session: s }: { session: ReturnType<typeof useGeoSessi
   const answered = s.answered;
   const { topology } = useWorldTopology();
   const neighborhood = useMemo(() => answered && topology
-    ? makeNeighborhoodPuzzle(host.iso2, s.state.config.difficulty, correct, topology, s.state.questionIndex)
-    : null, [answered, topology, host.iso2, s.state.config.difficulty, correct, s.state.questionIndex]);
+    ? makeNeighborhoodPuzzle(host.iso2, s.state.config.difficulty, landNeighbors(host.iso2, false), topology, s.state.questionIndex)
+    : null, [answered, topology, host.iso2, s.state.config.difficulty, s.state.questionIndex]);
   const reactions = useReactions();
   const reduced = useReducedMotion();
   const correctSet = new Set(correct);
@@ -90,6 +91,10 @@ function NeighborsRound({ session: s }: { session: ReturnType<typeof useGeoSessi
     {!answered && <Button onClick={opened}>Άνοιξε την πόρτα</Button>}
     {answered && <div className="geo-mode__bubble"><SpeechBubble lines={[correct.length ? pickGeoLine('door', s.state.questionIndex) : 'Αυτή η χώρα δεν έχει χερσαίους γείτονες!']} /></div>}
     {special.map((edge, i) => edge && <p key={i}>Ήξερες ότι… {edge.noteGreek}</p>)}
-    {answered && stage === 'closed' && neighborhood && <Button onClick={() => setStage('playing')}>Φτιάξε τη γειτονιά</Button>}
+    {answered && stage === 'closed' && neighborhood && <>
+      <p className="neighborhood__preview">Οι γείτονες που θα τοποθετήσεις είναι: {neighborhood.pieces
+        .map(piece => getCountryByIsoCode(piece.id)!.nameGreek).join(', ')}.</p>
+      <Button onClick={() => setStage('playing')}>Φτιάξε τη γειτονιά</Button>
+    </>}
   </>;
 }
