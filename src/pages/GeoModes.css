@@ -61,3 +61,15 @@
 .puzzle__wrap .puzzle__stage { margin: 0; }
 .puzzle__balls { position: absolute; inset: 0; pointer-events: none; }
 .puzzle__ball { position: absolute; transform: translate(-50%, -50%); pointer-events: none; }
+
+.neighborhood__wrap { position: relative; width: 100%; max-width: 450px; margin: 12px auto; }
+.neighborhood__stage { display: block; width: 100%; height: auto; }
+.neighborhood__piece { touch-action: none; cursor: grab; }
+.neighborhood__piece--placed { pointer-events: none; }
+.neighborhood__balls { position: absolute; inset: 0; pointer-events: none; }
+.neighborhood__ball { position: absolute; transform: translate(-50%, -50%); pointer-events: none; }
+.neighborhood__glow { filter: drop-shadow(0 0 3px #ffcf5c); animation: puzzle-glow .7s ease-out; }
+.neighborhood__bubble { position: relative; min-height: 86px; margin: 8px 0 16px; }
+.neighborhood__bubble .speech-bubble { bottom: 0; }
+@media (prefers-reduced-motion: reduce) { .neighborhood__glow { animation: none; } }
+.neighborhood__stage--still .neighborhood__glow { animation: none; }

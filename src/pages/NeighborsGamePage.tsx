@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { parseGameConfig } from './QuizGamePage';
 import { useGeoSession } from '../hooks/useGeoSession';
@@ -14,6 +14,9 @@ import { useReducedMotion } from '../hooks/useReducedMotion';
 import { useReactions } from '../reactions/ReactionsProvider';
 import { pickGeoLine } from '../data/ballLines';
 import { playSound } from '../audio/soundManager';
+import { useWorldTopology } from '../components/WorldMap/useWorldTopology';
+import { makeNeighborhoodPuzzle } from '../game/neighborhoodPuzzles';
+import { NeighborhoodStage } from './NeighborhoodStage';
 
 export function NeighborsGamePage() {
   const [params] = useSearchParams();
@@ -29,7 +32,12 @@ function NeighborsRound({ session: s }: { session: ReturnType<typeof useGeoSessi
   const { host, guests, correct, totalNeighbors } = s.round;
   const [picked, setPicked] = useState<string[]>([]);
   const [none, setNone] = useState(false);
+  const [stage, setStage] = useState<'closed' | 'playing' | 'skipped'>('closed');
   const answered = s.answered;
+  const { topology } = useWorldTopology();
+  const neighborhood = useMemo(() => answered && topology
+    ? makeNeighborhoodPuzzle(host.iso2, s.state.config.difficulty, correct, topology, s.state.questionIndex)
+    : null, [answered, topology, host.iso2, s.state.config.difficulty, correct, s.state.questionIndex]);
   const reactions = useReactions();
   const reduced = useReducedMotion();
   const correctSet = new Set(correct);
@@ -43,6 +51,8 @@ function NeighborsRound({ session: s }: { session: ReturnType<typeof useGeoSessi
     playSound('door'); reactions?.emit({ type: 'neighbors:open', host: host.iso2, guests: correct });
   };
   const special = answered ? correct.map(id => borderKind(host.iso2, id)).filter(Boolean) : [];
+  if (stage === 'playing' && neighborhood) return <NeighborhoodStage puzzle={neighborhood} host={host}
+    difficulty={s.state.config.difficulty} onSkip={() => setStage('skipped')} onComplete={() => {}} />;
   return <>
     <h1>Οι γείτονες χτυπούν την πόρτα</h1>
     <p>Ποιοι από τους καλεσμένους συνορεύουν με {host.nameGreekAccusative};</p>
@@ -74,5 +84,6 @@ function NeighborsRound({ session: s }: { session: ReturnType<typeof useGeoSessi
     {!answered && <Button onClick={opened}>Άνοιξε την πόρτα</Button>}
     {answered && <div className="geo-mode__bubble"><SpeechBubble lines={[correct.length ? pickGeoLine('door', s.state.questionIndex) : 'Αυτή η χώρα δεν έχει χερσαίους γείτονες!']} /></div>}
     {special.map((edge, i) => edge && <p key={i}>Ήξερες ότι… {edge.noteGreek}</p>)}
+    {answered && stage === 'closed' && neighborhood && <Button onClick={() => setStage('playing')}>Φτιάξε τη γειτονιά</Button>}
   </>;
 }
