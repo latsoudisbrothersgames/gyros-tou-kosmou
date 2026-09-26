@@ -1,5 +1,5 @@
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   DIFFICULTY_LABELS,
   FLAG_VARIANT_LABELS,
@@ -11,6 +11,7 @@ import {
 } from '../types/game';
 import { useSettings } from '../context/SettingsContext';
 import { Button } from '../components/Button/Button';
+import { getWorldTopology } from '../components/WorldMap/useWorldTopology';
 import './GamesPage.css';
 
 const MODES: { id: GameModeId; icon: string; text: string; accent: string }[] = [
@@ -22,7 +23,7 @@ const MODES: { id: GameModeId; icon: string; text: string; accent: string }[] = 
   { id: 'bigger', icon: '⚖️', text: 'Σύγκρινε πληθυσμό και έκταση χωρών', accent: 'leaf' },
   { id: 'parade', icon: '🎠', text: 'Πρόλαβε τη σωστή σημαία στην παρέλαση', accent: 'sun' },
   { id: 'whoami', icon: '🕵️', text: 'Μάντεψε τη χώρα με τρεις ενδείξεις', accent: 'grape' },
-  { id: 'neighbors', icon: '🏠', text: 'Βρες ποιοι έχουν χερσαία σύνορα', accent: 'leaf' },
+  { id: 'neighbors', icon: '🏠', text: 'Βρες τους γείτονες και φτιάξε τη γειτονιά!', accent: 'leaf' },
   { id: 'post', icon: '📦', text: 'Στείλε δέμα μέσα από χώρες', accent: 'ocean' },
   { id: 'puzzle', icon: '🧩', text: 'Ταίριαξε χώρες στον άτλαντα', accent: 'sun' },
   { id: 'scratch', icon: '🖐️', text: 'Ξύσε το κάλυμμα και μάντεψε τη σημαία', accent: 'coral' },
@@ -55,6 +56,10 @@ export function GamesPage() {
   const [difficulty, setDifficulty] = useState<DifficultyId>(settings.lastDifficulty);
   const [length, setLength] = useState<SessionLength>(10);
   const [variant, setVariant] = useState<FlagVariant>('mixed');
+
+  useEffect(() => {
+    if (mode === 'neighbors') void getWorldTopology().catch(() => {});
+  }, [mode]);
 
   if (!isGameMode(mode)) {
     return (

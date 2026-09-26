@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { parseGameConfig } from './QuizGamePage';
 import { useGeoSession } from '../hooks/useGeoSession';
-import { makeNeighborsPuzzle } from '../game/neighborsPuzzles';
+import { createNeighborsHostPicker, eligibleNeighborsHosts, makeNeighborsPuzzle } from '../game/neighborsPuzzles';
 import { scoreNeighbors, scoreNeighborhoodBonus } from '../game/scoring';
 import { borderKind, landNeighbors } from '../data/borders';
 import { getCountryByIsoCode } from '../data/countries';
@@ -16,27 +16,38 @@ import { useReactions } from '../reactions/ReactionsProvider';
 import { pickGeoLine } from '../data/ballLines';
 import { playSound } from '../audio/soundManager';
 import { useWorldTopology } from '../components/WorldMap/useWorldTopology';
-import { makeNeighborhoodPuzzle } from '../game/neighborhoodPuzzles';
+import { makeNeighborhoodPuzzle, qualifiesForNeighborhood } from '../game/neighborhoodPuzzles';
+import type { WorldTopology } from '../components/WorldMap/useWorldTopology';
 import { NeighborhoodStage } from './NeighborhoodStage';
 import { incrementNeighborhoodCount } from '../utils/storage';
 
 export function NeighborsGamePage() {
   const [params] = useSearchParams();
-  return <NeighborsSession key={params.toString()} config={parseGameConfig('neighbors', params)!} />;
+  const { topology, error } = useWorldTopology();
+  if (error) return <p role="alert">Δεν φορτώθηκε ο χάρτης. Δοκίμασε ξανά.</p>;
+  if (!topology) return <p role="status">Ετοιμάζουμε τη γειτονιά…</p>;
+  return <NeighborsSession key={params.toString()} config={parseGameConfig('neighbors', params)!} topology={topology} />;
 }
-function NeighborsSession({ config }: { config: NonNullable<ReturnType<typeof parseGameConfig>> }) {
-  const session = useGeoSession(config, index => makeNeighborsPuzzle(config.difficulty, index === 0 ? config.focusCountryId : undefined));
-  return <GeoModeLayout {...session}>
-    <NeighborsRound key={session.state.questionIndex} session={session} />
+export function NeighborsSession({ config, topology }: { config: NonNullable<ReturnType<typeof parseGameConfig>>; topology: WorldTopology }) {
+  const [picker] = useState(() => createNeighborsHostPicker(config.difficulty,
+    new Set(eligibleNeighborsHosts(config.difficulty).filter(c => qualifiesForNeighborhood(c.iso2, config.difficulty, topology))
+      .map(c => c.iso2)), config.focusCountryId));
+  const session = useGeoSession(config, index => makeNeighborsPuzzle(config.difficulty, undefined, picker.pick(index)));
+  const hasNeighborhood = qualifiesForNeighborhood(session.round.host.iso2, config.difficulty, topology);
+  return <GeoModeLayout {...session} nextVariant={hasNeighborhood ? 'secondary' : 'primary'}
+    restart={() => { picker.reset(); session.restart(); }}>
+    <NeighborsRound key={session.state.questionIndex} session={session} topology={topology} hasNeighborhood={hasNeighborhood} />
   </GeoModeLayout>;
 }
-function NeighborsRound({ session: s }: { session: ReturnType<typeof useGeoSession<ReturnType<typeof makeNeighborsPuzzle>>> }) {
+function NeighborsRound({ session: s, topology, hasNeighborhood }: {
+  session: ReturnType<typeof useGeoSession<ReturnType<typeof makeNeighborsPuzzle>>>;
+  topology: WorldTopology; hasNeighborhood: boolean;
+}) {
   const { host, guests, correct, totalNeighbors } = s.round;
   const [picked, setPicked] = useState<string[]>([]);
   const [none, setNone] = useState(false);
   const [stage, setStage] = useState<'closed' | 'playing' | 'skipped'>('closed');
   const answered = s.answered;
-  const { topology } = useWorldTopology();
   const neighborhood = useMemo(() => answered && topology
     ? makeNeighborhoodPuzzle(host.iso2, s.state.config.difficulty, landNeighbors(host.iso2, false), topology, s.state.questionIndex)
     : null, [answered, topology, host.iso2, s.state.config.difficulty, s.state.questionIndex]);
@@ -64,8 +75,11 @@ function NeighborsRound({ session: s }: { session: ReturnType<typeof useGeoSessi
     <h1>Οι γείτονες χτυπούν την πόρτα</h1>
     <p>Ποιοι από τους καλεσμένους συνορεύουν με {host.nameGreekAccusative};</p>
     {totalNeighbors > correct.length && <p>Βρες {correct.length} από τους {totalNeighbors} γείτονες ανάμεσα στις προσκλήσεις.</p>}
-    <div className="neighbors__house"><span aria-hidden="true">🏠</span><CountryBall country={host} size={100} identityVisible={answered} reactive={false}
-      mood={answered ? 'celebrate' : 'idle'} speechEnabled={false} /></div>
+    <div className="neighbors__house"><span className="neighbors__house-icon" aria-hidden="true">🏠</span>
+      <CountryBall country={host} size={100} identityVisible={answered} reactive={false}
+        mood={answered ? 'celebrate' : 'idle'} speechEnabled={false} />
+      {hasNeighborhood && <span className="neighbors__badge">🧩 Μετά: Φτιάξε τη γειτονιά</span>}
+    </div>
     <RegionalMap iso2s={[host.iso2, ...guests.map(c => c.iso2)]} host={host.iso2}
       revealed={answered} highlighted={answered ? correct : []} />
     {answered && correct.length > 0 && <div className={`neighbors__table ${reduced ? 'neighbors__table--still' : ''}`}>

@@ -8,6 +8,46 @@ import type { WorldTopology } from '../components/WorldMap/useWorldTopology';
 import type { DifficultyId } from '../types/game';
 
 const OMIT = new Set(['xk', 'ps', 'tw', 'ma', 'mr']);
+const sharedBorders = new WeakMap<WorldTopology, Map<string, Set<string>>>();
+
+/** Shared TopoJSON arcs are the cheap, exact land-border precheck for Stage 2. */
+function topologyBorders(topology: WorldTopology): Map<string, Set<string>> {
+  const cached = sharedBorders.get(topology);
+  if (cached) return cached;
+  const owners = new Map<number, string[]>();
+  const collect = (arcs: number | readonly unknown[], found: Set<number>): void => {
+    if (typeof arcs === 'number') found.add(arcs < 0 ? ~arcs : arcs);
+    else for (const arc of arcs) collect(arc as number | readonly unknown[], found);
+  };
+  for (const geometry of topology.raw.objects.countries.geometries) {
+    const id = getCountryByIsoNumeric(String(geometry.id))?.iso2;
+    if (!id || !('arcs' in geometry) || !geometry.arcs) continue;
+    const arcs = new Set<number>();
+    collect(geometry.arcs, arcs);
+    for (const arc of arcs) {
+      const countries = owners.get(arc) ?? [];
+      countries.push(id);
+      owners.set(arc, countries);
+    }
+  }
+  const borders = new Map<string, Set<string>>();
+  for (const countries of owners.values()) for (const a of countries) for (const b of countries) {
+    if (a === b) continue;
+    const neighbors = borders.get(a) ?? new Set<string>();
+    neighbors.add(b);
+    borders.set(a, neighbors);
+  }
+  sharedBorders.set(topology, borders);
+  return borders;
+}
+
+export function qualifiesForNeighborhood(hostId: string, difficulty: DifficultyId, topology: WorldTopology): boolean {
+  if (OMIT.has(hostId) || !topology.availableIso2.has(hostId)) return false;
+  const shared = topologyBorders(topology).get(hostId);
+  const minimum = difficulty === 'medium' ? 4 : 3;
+  return (BORDERS[hostId] ?? []).filter(id => !OMIT.has(id) && !borderKind(hostId, id)
+    && topology.availableIso2.has(id) && getCountryByIsoCode(id) && shared?.has(id)).length >= minimum;
+}
 export interface NeighborhoodPiece {
   id: string;
   /** Path in piece-local coordinates. No board position belongs in the tray markup. */

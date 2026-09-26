@@ -54,7 +54,7 @@ await withPreview(async ({ page }) => {
   const round = () => page.locator('.new-mode__round');
   const shot = name => page.screenshot({ path: `tools/shots/mode-${name}.png`, fullPage: true });
   const advance = async previous => {
-    await round().getByRole('button', { name: /Επόμενος γύρος|Αποτελέσματα/ }).click();
+    await round().getByRole('button', { name: /Επόμενος γύρος|Επόμενη ερώτηση|Αποτελέσματα/ }).click();
     await page.waitForFunction(prev => document.querySelector('.new-mode__round')?.dataset.round !== prev, previous);
   };
   const basicNoLeak = async mode => {

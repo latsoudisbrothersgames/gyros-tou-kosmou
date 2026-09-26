@@ -28,6 +28,8 @@ mkdirSync('tools/shots', { recursive: true });
 await withPreview(async ({ page }) => {
   const errors = [];
   page.on('pageerror', error => errors.push(error.message));
+  await page.goto(`${base}#/games`);
+  assert.match(await page.getByRole('link', { name: /Οι γείτονες χτυπούν την πόρτα/ }).innerText(), /Φτιάξε τη γειτονιά/);
   for (const [difficulty, host] of [['easy', 'gr'], ['medium', 'gr'], ['hard', 'cn']]) {
     for (let round = 0; round < 3; round++) {
       await page.goto(`${base}#/`);
@@ -39,9 +41,11 @@ await withPreview(async ({ page }) => {
       const root = page.locator('.new-mode__round');
       await root.waitFor();
       assert.equal(await root.getAttribute('data-answered'), 'false');
+      assert.equal(await root.locator('.neighbors__badge').innerText(), '🧩 Μετά: Φτιάξε τη γειτονιά');
       assert.equal(await root.locator('.neighborhood__piece, [data-target], [data-correct]').count(), 0);
       assert.equal(await root.getByRole('button', { name: 'Φτιάξε τη γειτονιά' }).count(), 0);
       assert.equal(await root.locator('[data-accessory]').count(), 0);
+      if (round === 0) await page.screenshot({ path: `tools/shots/geitonia-${difficulty}-cue.png` });
       const guestNames = await root.locator('.neighbors__guest > span').allInnerTexts();
       const guests = guestNames.map(name => byName.get(name));
       assert.ok(guests.every(Boolean));
@@ -49,6 +53,12 @@ await withPreview(async ({ page }) => {
       for (const id of correct) await root.locator('.neighbors__guest').nth(guests.indexOf(id)).click();
       await root.getByRole('button', { name: 'Άνοιξε την πόρτα' }).click();
       await root.getByRole('button', { name: 'Φτιάξε τη γειτονιά' }).waitFor();
+      const stageButton = root.getByRole('button', { name: 'Φτιάξε τη γειτονιά' });
+      const nextButton = root.getByRole('button', { name: 'Επόμενη ερώτηση →' });
+      assert.match(await stageButton.getAttribute('class'), /\bbtn--primary\b/);
+      assert.match(await nextButton.getAttribute('class'), /\bbtn--secondary\b/);
+      assert.ok(await stageButton.evaluate((button, next) => Boolean(button.compareDocumentPosition(next) & Node.DOCUMENT_POSITION_FOLLOWING), await nextButton.elementHandle()));
+      if (round === 0) await page.screenshot({ path: `tools/shots/geitonia-${difficulty}-choice.png` });
       const stageOneScore = await page.locator('.score-display__value').first().innerText();
       const stageOneStreak = await page.locator('.score-display__value').last().innerText();
       const collection = await page.evaluate(() => localStorage.getItem('geographyGame:collection:v1'));

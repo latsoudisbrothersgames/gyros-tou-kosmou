@@ -2,9 +2,10 @@
 .regional-map { display: block; width: 100%; height: auto; max-height: 250px; margin: 12px auto; border-radius: 16px; }
 .regional-map--loading { min-height: 180px; display: grid; place-items: center; background: #e6f5fa; }
 .regional-map [role="button"] { cursor: pointer; }
-.neighbors__house { position: relative; width: 120px; margin: 8px auto 0; display: grid; justify-items: center; }
-.neighbors__house > span { position: absolute; font-size: 7rem; line-height: 1; opacity: .32; }
+.neighbors__house { position: relative; width: fit-content; max-width: 100%; margin: 8px auto 0; display: grid; justify-items: center; }
+.neighbors__house-icon { position: absolute; top: 0; left: 50%; transform: translateX(-50%); font-size: 7rem; line-height: 1; opacity: .32; }
 .neighbors__house .countryball { position: relative; margin-top: 18px; }
+.neighbors__badge { position: relative; max-width: 100%; margin-top: 4px; padding: 6px 12px; border: 2px solid #639d7b; border-radius: 999px; background: #e8f6ed; color: #214c37; font-size: .78rem; font-weight: 800; line-height: 1.3; }
 .neighbors__guests { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin: 12px 0; }
 .neighbors__guest { display: flex; align-items: center; gap: 5px; min-height: 65px; border: 2px solid #b5d8e0; border-radius: 14px; background: #fff; padding: 5px; color: #18314a; font: inherit; font-size: .78rem; font-weight: 800; text-align: left; }
 .neighbors__guest[aria-pressed="true"] { background: #fff4d6; border-color: #e6a445; }

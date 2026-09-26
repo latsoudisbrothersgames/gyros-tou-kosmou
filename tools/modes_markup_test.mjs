@@ -15,6 +15,12 @@ try {
   const { ALL_COUNTRIES } = await server.ssrLoadModule('/src/data/countries.ts');
   const { BALL_ACCESSORIES } = await server.ssrLoadModule('/src/data/ballAccessories.ts');
   const { SettingsProvider } = await server.ssrLoadModule('/src/context/SettingsContext.tsx');
+  const { getCountryByIsoNumeric, getCountryByIsoCode } = await server.ssrLoadModule('/src/data/countries.ts');
+  const raw = atlas;
+  const countries = feature(raw, raw.objects.countries).features.map(f => ({
+    feature: f, isoNumeric: String(f.id), iso2: getCountryByIsoNumeric(String(f.id))?.iso2,
+  }));
+  const topology = { raw, countries, availableIso2: new Set(countries.map(c => c.iso2).filter(Boolean)) };
   const renderBall = props => renderToStaticMarkup(React.createElement(SettingsProvider, null, React.createElement(CountryBall, props)));
   for (const country of ALL_COUNTRIES) {
     const hidden = renderBall({ country, concealed: true, mood: 'thinking', identityVisible: true });
@@ -53,8 +59,10 @@ try {
     ['puzzle', 'PuzzleGamePage', 'PuzzleGamePage'],
   ]) {
     const module = await server.ssrLoadModule(`/src/pages/${file}.tsx`);
+    const Component = mode === 'neighbors' ? module.NeighborsSession : module[name];
+    const props = mode === 'neighbors' ? { config: { mode, difficulty: 'easy', length: 10, focusCountryId: 'gr' }, topology } : {};
     const markup = renderToStaticMarkup(React.createElement(SettingsProvider, null,
-      React.createElement(MemoryRouter, { initialEntries: [`/play/${mode}?focus=gr`] }, React.createElement(module[name]))));
+      React.createElement(MemoryRouter, { initialEntries: [`/play/${mode}?focus=gr`] }, React.createElement(Component, props))));
     assert.ok(markup.includes(`data-mode="${mode}"`));
     assert.ok(!markup.includes('data-accessory='), `${mode}: πρόωρο αξεσουάρ`);
     assert.ok(!/Γεια σου γείτονα|Γεια! Είμαι/.test(markup), `${mode}: πρόωρη ατάκα`);
@@ -66,18 +74,23 @@ try {
     assert.ok(!markup.includes('Η πιο σύντομη'));
     assert.ok(!markup.includes('puzzle__piece--placed') || mode === 'puzzle');
     if (mode === 'neighbors') {
-      assert.ok(!markup.includes('Φτιάξε τη γειτονιά'), 'Το Στάδιο 2 δεν προσφέρεται πριν από την απάντηση');
+      assert.ok(markup.includes('neighbors__badge'), 'Η προαναγγελία φαίνεται πριν από την απάντηση');
+      assert.ok(!markup.includes('>Φτιάξε τη γειτονιά</button>'), 'Το Στάδιο 2 δεν ανοίγει πριν από την απάντηση');
       assert.ok(!markup.includes('neighborhood__piece'), 'Κανένα κομμάτι πριν από την απάντηση');
     }
   }
+  const { qualifiesForNeighborhood } = await server.ssrLoadModule('/src/game/neighborhoodPuzzles.ts');
+  const { eligibleNeighborsHosts } = await server.ssrLoadModule('/src/game/neighborsPuzzles.ts');
+  const unqualifiedHost = eligibleNeighborsHosts('easy').find(c => !qualifiesForNeighborhood(c.iso2, 'easy', topology));
+  assert.ok(unqualifiedHost);
+  const { NeighborsSession } = await server.ssrLoadModule('/src/pages/NeighborsGamePage.tsx');
+  const unqualifiedMarkup = renderToStaticMarkup(React.createElement(SettingsProvider, null,
+    React.createElement(MemoryRouter, null, React.createElement(NeighborsSession, {
+      config: { mode: 'neighbors', difficulty: 'easy', length: 10, focusCountryId: unqualifiedHost.iso2 }, topology,
+    }))));
+  assert.ok(!unqualifiedMarkup.includes('neighbors__badge'), 'Χωρίς μήνυμα απογοήτευσης όταν δεν υπάρχει Στάδιο 2');
   const { makeNeighborhoodPuzzle } = await server.ssrLoadModule('/src/game/neighborhoodPuzzles.ts');
   const { NeighborhoodStage } = await server.ssrLoadModule('/src/pages/NeighborhoodStage.tsx');
-  const { getCountryByIsoNumeric, getCountryByIsoCode } = await server.ssrLoadModule('/src/data/countries.ts');
-  const raw = atlas;
-  const countries = feature(raw, raw.objects.countries).features.map(f => ({
-    feature: f, isoNumeric: String(f.id), iso2: getCountryByIsoNumeric(String(f.id))?.iso2,
-  }));
-  const topology = { raw, countries, availableIso2: new Set(countries.map(c => c.iso2).filter(Boolean)) };
   const neighborhood = makeNeighborhoodPuzzle('gr', 'easy', ['al', 'bg', 'mk', 'tr'], topology, 0);
   assert.ok(neighborhood && neighborhood.pieces.length === 3);
   const stage = renderToStaticMarkup(React.createElement(SettingsProvider, null,

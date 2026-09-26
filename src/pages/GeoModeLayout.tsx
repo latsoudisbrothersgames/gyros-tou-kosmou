@@ -8,9 +8,10 @@ import { Button } from '../components/Button/Button';
 import './NewModes.css';
 import './GeoModes.css';
 
-export function GeoModeLayout({ state, total, answered, next, restart, finish, children }: {
+export function GeoModeLayout({ state, total, answered, next, restart, finish, children, nextVariant = 'primary' }: {
   state: SessionState; total: number | null; answered: boolean;
   next: () => void; restart: () => void; finish: () => void; children: ReactNode;
+  nextVariant?: 'primary' | 'secondary';
 }) {
   if (state.finished) return <GameResults state={state} onPlayAgain={restart} />;
   const last = answered ? state.answers.at(-1) : undefined;
@@ -26,7 +27,8 @@ export function GeoModeLayout({ state, total, answered, next, restart, finish, c
       {last && <div className="new-mode__feedback" role="status">
         <p>{last.correct ? `✓ Μπράβο! +${last.pointsAwarded} πόντοι` : `Προσπάθησε ξανά στον επόμενο γύρο! +${last.pointsAwarded} πόντοι`}</p>
         {last.discovered && <p>🎁 Νέα φιγούρα στη Συλλογή σου!</p>}
-        <Button onClick={next}>{total !== null && state.questionIndex + 1 >= total ? 'Αποτελέσματα →' : 'Επόμενος γύρος →'}</Button>
+        <Button variant={nextVariant} onClick={next}>{total !== null && state.questionIndex + 1 >= total
+          ? 'Αποτελέσματα →' : state.config.mode === 'neighbors' ? 'Επόμενη ερώτηση →' : 'Επόμενος γύρος →'}</Button>
       </div>}
     </section>
   </div>;

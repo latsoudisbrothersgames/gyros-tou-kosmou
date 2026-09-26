@@ -7,6 +7,8 @@ import type { Country } from '../types/country';
 import type { DifficultyId } from '../types/game';
 
 const SKIP = new Set(['xk', 'ps', 'tw', 'ma', 'mr']);
+/** At least one Stage-2 host in each block of this many rounds. */
+export const NEIGHBORHOOD_ROUND_INTERVAL = 3;
 export interface NeighborsPuzzle {
   host: Country; guests: Country[]; correct: string[]; totalNeighbors: number;
 }
@@ -30,15 +32,51 @@ export function rankedNeighborTraps(hostId: string): Country[] {
       || centroidDistance(hostId, a.iso2) - centroidDistance(hostId, b.iso2)
       || a.iso2.localeCompare(b.iso2));
 }
-export function makeNeighborsPuzzle(difficulty: DifficultyId, focus?: string): NeighborsPuzzle {
+export function eligibleNeighborsHosts(difficulty: DifficultyId): Country[] {
   const includeSpecial = difficulty !== 'easy';
-  const eligible = ALL_COUNTRIES.filter(c => {
+  return ALL_COUNTRIES.filter(c => {
     if (SKIP.has(c.iso2)) return false;
     const n = landNeighbors(c.iso2, includeSpecial).filter(id => !SKIP.has(id)).length;
     return difficulty === 'easy' ? c.tier === 1 && n >= 2 && n <= 5
       : difficulty === 'medium' ? c.tier <= 2 && n >= 1 && n <= 7 : true;
   });
-  const host = eligible.find(c => c.iso2 === focus) ?? shuffle(eligible)[0];
+}
+
+/** Keep a session's host choices distinct until the relevant pool is exhausted. */
+export function createNeighborsHostPicker(difficulty: DifficultyId, qualifies: ReadonlySet<string>,
+  focus?: string, random: () => number = Math.random) {
+  const eligible = eligibleNeighborsHosts(difficulty);
+  const qualifying = eligible.filter(c => qualifies.has(c.iso2));
+  const focused = eligible.find(c => c.iso2 === focus);
+  const used = new Set<string>();
+  const chosen = new Map<number, Country>();
+  let previous: string | undefined;
+  const pick = (index: number): Country => {
+    const cached = chosen.get(index);
+    if (cached) return cached;
+    const mustQualify = qualifying.length > 0 && (index % NEIGHBORHOOD_ROUND_INTERVAL === 0 && !(index === 0 && focused)
+      || index === 1 && focused !== undefined && !qualifies.has(focused.iso2));
+    const pool = mustQualify ? qualifying : eligible.filter(c => !qualifies.has(c.iso2));
+    let available = pool.filter(c => !used.has(c.iso2) && c.iso2 !== previous);
+    if (!available.length && !mustQualify) available = eligible.filter(c => !used.has(c.iso2) && c.iso2 !== previous);
+    if (!available.length) {
+      used.clear();
+      available = (pool.length ? pool : eligible).filter(c => c.iso2 !== previous);
+    }
+    const host = index === 0 && focused ? focused : available[Math.floor(random() * available.length)];
+    used.add(host.iso2);
+    previous = host.iso2;
+    chosen.set(index, host);
+    return host;
+  };
+  const reset = () => { used.clear(); chosen.clear(); previous = undefined; };
+  return { pick, reset };
+}
+
+export function makeNeighborsPuzzle(difficulty: DifficultyId, focus?: string, hostOverride?: Country): NeighborsPuzzle {
+  const eligible = hostOverride ? [] : eligibleNeighborsHosts(difficulty);
+  const host = hostOverride ?? eligible.find(c => c.iso2 === focus) ?? shuffle(eligible)[0];
+  const includeSpecial = difficulty !== 'easy';
   const real = landNeighbors(host.iso2, includeSpecial).filter(id => !SKIP.has(id));
   const slots = { easy: 6, medium: 7, hard: 8 }[difficulty];
   const correct = shuffle(real).slice(0, Math.min(real.length, difficulty === 'hard' ? 5 : slots - 2));
