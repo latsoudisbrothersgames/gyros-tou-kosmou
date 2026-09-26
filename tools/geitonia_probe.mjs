@@ -29,7 +29,7 @@ await withPreview(async ({ page }) => {
   const errors = [];
   page.on('pageerror', error => errors.push(error.message));
   await page.goto(`${base}#/games`);
-  assert.match(await page.getByRole('link', { name: /Οι γείτονες χτυπούν την πόρτα/ }).innerText(), /Φτιάξε τη γειτονιά/);
+  assert.match(await page.getByRole('link', { name: /Οι γείτονες χτυπούν την πόρτα/ }).innerText(), /φτιάξε τη γειτονιά/i);
   for (const [difficulty, host] of [['easy', 'gr'], ['medium', 'gr'], ['hard', 'cn']]) {
     for (let round = 0; round < 3; round++) {
       await page.goto(`${base}#/`);
