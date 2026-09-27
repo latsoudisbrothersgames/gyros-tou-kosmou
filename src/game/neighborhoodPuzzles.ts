@@ -1,6 +1,5 @@
 import { geoLength, geoNaturalEarth1, geoPath } from 'd3-geo';
 import { mesh } from 'topojson-client';
-import type { FeatureCollection, Geometry } from 'geojson';
 import { BOARD, trimRemote } from './puzzleGeometry';
 import { BORDERS, borderKind } from '../data/borders';
 import { getCountryByIsoCode, getCountryByIsoNumeric } from '../data/countries';
@@ -56,6 +55,11 @@ export interface NeighborhoodPiece {
   y: number;
   width: number;
   height: number;
+  visibleWidth: number;
+  visibleHeight: number;
+  /** Centre of the visible clipped shape, used only for logical drop ownership. */
+  targetX: number;
+  targetY: number;
   trayScale: number;
   tiny: boolean;
   direction: 'βόρεια' | 'νότια' | 'ανατολικά' | 'δυτικά';
@@ -64,6 +68,7 @@ export interface NeighborhoodPuzzle {
   hostId: string;
   anchor: string;
   anchorCenter: [number, number];
+  hostBounds: { x: number; y: number; width: number; height: number };
   exterior: string;
   pieces: NeighborhoodPiece[];
   trayOrder: string[];
@@ -92,20 +97,35 @@ export function makeNeighborhoodPuzzle(hostId: string, difficulty: DifficultyId,
   if (candidates.length < minimum) return null;
   const features = new Map([hostId, ...candidates].map(id => {
     const item = topology.countries.find(c => c.iso2 === id)!;
-    return [id, trimRemote(item.feature)] as const;
+    return [id, item.feature] as const;
   }));
-  const projection = geoNaturalEarth1().fitExtent([[BOARD.x0, BOARD.y0], [BOARD.x1, BOARD.y1]],
-    { type: 'FeatureCollection', features: [...features.values()] } as FeatureCollection<Geometry>);
-  const path = geoPath(projection);
-  const anchor = path(features.get(hostId)!) ?? '';
-  const [[hx0, hy0], [hx1, hy1]] = path.bounds(features.get(hostId)!);
-  const hostCenter = [(hx0 + hx1) / 2, (hy0 + hy1) / 2];
-  const numeric = new Map([hostId, ...candidates].map(id => [id, getCountryByIsoCode(id)!.isoNumeric]));
+  let frameHost = trimRemote(host.feature);
   const borderGeometry = (a: string, b: string) => mesh(topology.raw, topology.raw.objects.countries, (g1, g2) => {
     const x = getCountryByIsoNumeric(String(g1.id))?.iso2;
     const y = getCountryByIsoNumeric(String(g2.id))?.iso2;
     return x === a && y === b || x === b && y === a;
   });
+  // Fit only the host. A 15% margin on each board axis leaves room for the shared-border
+  // fragments of its neighbours while guaranteeing a 70% host span on one axis.
+  const boardWidth = BOARD.x1 - BOARD.x0, boardHeight = BOARD.y1 - BOARD.y0;
+  const frame: [[number, number], [number, number]] = [
+    [BOARD.x0 + boardWidth * 0.15, BOARD.y0 + boardHeight * 0.15],
+    [BOARD.x1 - boardWidth * 0.15, BOARD.y1 - boardHeight * 0.15],
+  ];
+  const project = () => geoNaturalEarth1().fitExtent(frame, frameHost)
+    .clipExtent([[BOARD.x0, BOARD.y0], [BOARD.x1, BOARD.y1]]);
+  let projection = project();
+  // Some archipelagos have a land-border island that trimRemote excludes. Restore
+  // the full host only when its real shared border is otherwise off the board.
+  if (frameHost !== host.feature && candidates.some(id => !geoPath(projection)(borderGeometry(hostId, id)))) {
+    frameHost = host.feature;
+    projection = project();
+  }
+  const path = geoPath(projection);
+  const anchor = path(features.get(hostId)!) ?? '';
+  const [[hx0, hy0], [hx1, hy1]] = path.bounds(features.get(hostId)!);
+  const hostCenter = [(hx0 + hx1) / 2, (hy0 + hy1) / 2];
+  const numeric = new Map([hostId, ...candidates].map(id => [id, getCountryByIsoCode(id)!.isoNumeric]));
   const entries = candidates.map(id => {
     const feature = features.get(id)!;
     const [[x0, y0], [x1, y1]] = path.bounds(feature);
@@ -128,23 +148,28 @@ export function makeNeighborhoodPuzzle(hostId: string, difficulty: DifficultyId,
   }
   const pieces = selected.map(e => {
     const feature = features.get(e.id)!;
-    const width = Math.max(1, e.x1 - e.x0), height = Math.max(1, e.y1 - e.y0);
+    const visibleWidth = e.x1 - e.x0, visibleHeight = e.y1 - e.y0;
+    const width = Math.max(1, visibleWidth), height = Math.max(1, visibleHeight);
+    const [targetX, targetY] = path.centroid(feature);
     const local = geoNaturalEarth1().scale(projection.scale()).rotate(projection.rotate())
-      .translate([projection.translate()[0] - e.x0, projection.translate()[1] - e.y0]);
+      .translate([projection.translate()[0] - e.x0, projection.translate()[1] - e.y0])
+      .clipExtent([[BOARD.x0 - e.x0, BOARD.y0 - e.y0], [BOARD.x1 - e.x0, BOARD.y1 - e.y0]]);
     const tiny = width < 44 || height < 44;
-    return { id: e.id, d: geoPath(local)(feature) ?? '', x: e.x0, y: e.y0, width, height,
+    return { id: e.id, d: geoPath(local)(feature) ?? '', x: e.x0, y: e.y0,
+      width, height, visibleWidth, visibleHeight, targetX, targetY,
       trayScale: tiny ? Math.min(80 / width, 60 / height, Math.max(1, 44 / Math.min(width, height))) : 1,
       tiny, direction: e.direction };
   });
   const regularScale = Math.min(1, ...pieces.filter(p => !p.tiny).map(p => Math.min(104 / p.width, 92 / p.height)));
   for (const piece of pieces) if (!piece.tiny) piece.trayScale = regularScale;
-  const boardPath = geoPath(geoNaturalEarth1().scale(projection.scale()).rotate(projection.rotate())
-    .translate(projection.translate()).clipExtent([[3, 3], [357, BOARD.y1 + 6]]));
+  const boardPath = path;
   const chosen = new Set([hostId, ...pieces.map(p => p.id)]);
   const subset = { type: 'GeometryCollection' as const, geometries: topology.raw.objects.countries.geometries
     .filter(g => [...numeric.values()].includes(String(g.id)) && chosen.has(getCountryByIsoNumeric(String(g.id))?.iso2 ?? '')) };
   const exterior = boardPath(mesh(topology.raw, subset, (a, b) => a === b)) ?? '';
   const borders = new Map(pieces.map(p => [p.id, boardPath(borderGeometry(hostId, p.id)) ?? '']));
   const trayOrder = pieces.map(p => p.id).sort((a, b) => hash(`${seed}:tray:${a}`) - hash(`${seed}:tray:${b}`));
-  return { hostId, anchor, anchorCenter: [hostCenter[0], hostCenter[1]], exterior, pieces, trayOrder, borders };
+  return { hostId, anchor, anchorCenter: [hostCenter[0], hostCenter[1]],
+    hostBounds: { x: hx0, y: hy0, width: hx1 - hx0, height: hy1 - hy0 },
+    exterior, pieces, trayOrder, borders };
 }

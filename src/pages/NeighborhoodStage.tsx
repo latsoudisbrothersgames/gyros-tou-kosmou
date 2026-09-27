@@ -1,6 +1,7 @@
-import { useRef, useState, type PointerEvent } from 'react';
+import { useEffect, useRef, useState, type PointerEvent } from 'react';
 import { BOARD, STAGE_H, TRAY_TOP } from '../game/puzzleGeometry';
 import type { NeighborhoodPiece, NeighborhoodPuzzle } from '../game/neighborhoodPuzzles';
+import { acceptsNeighborhoodDrop, trayHitSide } from '../game/neighborhoodTouch';
 import type { Country } from '../types/country';
 import type { DifficultyId } from '../types/game';
 import { getCountryByIsoCode } from '../data/countries';
@@ -36,8 +37,18 @@ export function NeighborhoodStage({ puzzle, host, difficulty, onSkip, onComplete
   const [message, setMessage] = useState('');
   const [finished, setFinished] = useState(false);
   const [reward, setReward] = useState<{ bonus: number; count: number } | null>(null);
+  const [svgScale, setSvgScale] = useState(1);
   const reduced = useReducedMotion();
   const reactions = useReactions();
+  useEffect(() => {
+    const svg = svgRef.current;
+    if (!svg) return;
+    const measure = () => setSvgScale(svg.getBoundingClientRect().width / 360 || 1);
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(svg);
+    return () => observer.disconnect();
+  }, []);
   const localPoint = (event: PointerEvent<SVGElement>) => {
     const svg = svgRef.current!;
     const point = svg.createSVGPoint();
@@ -65,8 +76,7 @@ export function NeighborhoodStage({ puzzle, host, difficulty, onSkip, onComplete
     const here = localPoint(event);
     drag.current = null;
     setActive(null);
-    const targetDistance = Math.hypot(here.x - piece.width / 2 - piece.x, here.y - piece.height / 2 - piece.y);
-    if (!cancelled && targetDistance <= { easy: 72, medium: 48, hard: 36 }[difficulty]) {
+    if (!cancelled && acceptsNeighborhoodDrop(piece.id, here, puzzle.pieces, placed, difficulty, svgScale)) {
       const next = [...placed, piece.id];
       setPositions(v => ({ ...v, [piece.id]: { x: piece.x, y: piece.y, scale: 1 } }));
       setPlaced(next);
@@ -111,9 +121,10 @@ export function NeighborhoodStage({ puzzle, host, difficulty, onSkip, onComplete
             transform={`translate(${pos.x} ${pos.y}) scale(${pos.scale})`}
             onPointerDown={event => begin(event, piece)} aria-label={getCountryByIsoCode(piece.id)!.nameGreek}>
             <path d={piece.d} fill={done ? '#ffcf85' : '#ffc675'} stroke="#a76d36" strokeWidth="1.5" vectorEffect="non-scaling-stroke" />
-            <rect x={piece.width / 2 - Math.max(piece.width, 52 / pos.scale) / 2}
-              y={piece.height / 2 - Math.max(piece.height, 52 / pos.scale) / 2}
-              width={Math.max(piece.width, 52 / pos.scale)} height={Math.max(piece.height, 52 / pos.scale)} fill="transparent" />
+            <rect x={piece.width / 2 - trayHitSide(piece.width, pos.scale, svgScale) / 2}
+              y={piece.height / 2 - trayHitSide(piece.height, pos.scale, svgScale) / 2}
+              width={trayHitSide(piece.width, pos.scale, svgScale)}
+              height={trayHitSide(piece.height, pos.scale, svgScale)} fill="transparent" />
             {piece.tiny && !done && <text x={2 / pos.scale} y={-4 / pos.scale} fontSize={11 / pos.scale} fill="#21405a">
               🔍 {getCountryByIsoCode(piece.id)!.nameGreek}
             </text>}

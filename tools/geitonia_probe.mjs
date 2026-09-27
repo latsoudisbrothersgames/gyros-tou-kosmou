@@ -9,19 +9,25 @@ import { feature } from 'topojson-client';
 import atlas from 'world-atlas/countries-50m.json' with { type: 'json' };
 import { getCountryByIsoNumeric } from './src/data/countries.ts';
 import { makeNeighborhoodPuzzle } from './src/game/neighborhoodPuzzles.ts';
+import { dropCenter, dropHalfSide } from './src/game/neighborhoodTouch.ts';
 const countries = feature(atlas, atlas.objects.countries).features.map(f => ({
   feature: f, isoNumeric: String(f.id), iso2: getCountryByIsoNumeric(String(f.id))?.iso2,
 }));
 const puzzle = makeNeighborhoodPuzzle(process.argv[1], process.argv[2], JSON.parse(process.argv[3]), {
   raw: atlas, countries, availableIso2: new Set(countries.map(c => c.iso2).filter(Boolean)),
 }, Number(process.argv[4]));
-console.log(JSON.stringify(puzzle?.pieces.map(({ id, x, y, width, height }) => ({ id, x, y, width, height })) ?? null));`;
+console.log(JSON.stringify(puzzle?.pieces.map(piece => ({ id: piece.id, x: piece.x, y: piece.y,
+  width: piece.width, height: piece.height,
+  dropX: dropCenter(piece, dropHalfSide(piece, process.argv[2], Number(process.argv[5]))).x,
+  dropY: dropCenter(piece, dropHalfSide(piece, process.argv[2], Number(process.argv[5]))).y,
+  dropHitPx: 2 * dropHalfSide(piece, process.argv[2], Number(process.argv[5])) * Number(process.argv[5]),
+})) ?? null));`;
 const data = JSON.parse(execFileSync(process.execPath, ['--import', './scripts/register_ts.mjs', '--input-type=module', '-e',
   "import {ALL_COUNTRIES} from './src/data/countries.ts'; import {BORDERS} from './src/data/borders.ts'; import {SPECIAL_BORDERS} from './src/data/borderOverrides.ts'; console.log(JSON.stringify({countries:ALL_COUNTRIES,borders:BORDERS,special:SPECIAL_BORDERS}))"], { encoding: 'utf8' }));
 const byName = new Map(data.countries.map(c => [c.nameGreek, c.iso2]));
 const special = new Set(data.special.map(e => [e.a, e.b].sort().join('-')));
-const solution = (host, difficulty, revealed, seed) => JSON.parse(execFileSync(process.execPath,
-  ['--import', './scripts/register_ts.mjs', '--input-type=module', '-e', source, host, difficulty, JSON.stringify(revealed), String(seed)],
+const solution = (host, difficulty, revealed, seed, scale = 1) => JSON.parse(execFileSync(process.execPath,
+  ['--import', './scripts/register_ts.mjs', '--input-type=module', '-e', source, host, difficulty, JSON.stringify(revealed), String(seed), String(scale)],
   { encoding: 'utf8' }));
 
 mkdirSync('tools/shots', { recursive: true });
@@ -71,11 +77,21 @@ await withPreview(async ({ page }) => {
       const svg = root.locator('svg.neighborhood__stage');
       await svg.waitFor();
       await svg.evaluate(el => el.scrollIntoView({ block: 'center' }));
+      assert.deepEqual(page.viewportSize(), { width: 390, height: 844 });
+      const svgScale = (await svg.boundingBox()).width / 360;
+      assert.equal(await root.locator('.neighborhood__piece rect').count(), pieces.length);
+      for (const piece of solution(host, difficulty, revealed, 0, svgScale)) {
+        assert.ok(piece.dropHitPx >= 44, `${host}/${difficulty}/${piece.id}: στόχος απόθεσης <44 px`);
+      }
+      await page.waitForFunction(() => [...document.querySelectorAll('.neighborhood__piece rect')]
+        .every(rect => rect.getBoundingClientRect().width >= 44 && rect.getBoundingClientRect().height >= 44));
       assert.equal(await root.locator('[data-target], [data-correct]').count(), 0);
       assert.equal(await root.locator('.neighborhood__glow').count(), 0);
       const trayTransforms = await root.locator('.neighborhood__piece').evaluateAll(nodes => nodes.map(n => n.getAttribute('transform')));
       assert.ok(trayTransforms.every(t => Number(t.match(/translate\([^ ]+ ([^)]+)/)?.[1]) >= 302));
       if (round === 0) await page.screenshot({ path: `tools/shots/geitonia-${difficulty}-before.png` });
+      if (round === 0 && (difficulty === 'medium' || difficulty === 'hard'))
+        await page.screenshot({ path: `tools/shots/geitonia-${host}-${difficulty}-390x844.png` });
       const dragTo = async (id, x, y) => {
         const name = data.countries.find(c => c.iso2 === id).nameGreek;
         const piece = root.locator(`.neighborhood__piece[aria-label="${name}"] rect`);
@@ -93,9 +109,9 @@ await withPreview(async ({ page }) => {
       await dragTo(pieces[0].id, 30, 540); // Σκόπιμα λάθος στον δίσκο.
       assert.equal(await root.locator('.neighborhood__piece--placed').count(), 0);
       if (round === 1) await page.screenshot({ path: `tools/shots/geitonia-${difficulty}-wrong.png` });
-      for (const piece of pieces) {
+      for (const piece of solution(host, difficulty, revealed, 0, svgScale)) {
         await svg.evaluate(el => el.scrollIntoView({ block: 'center' }));
-        await dragTo(piece.id, piece.x + piece.width / 2, piece.y + piece.height / 2);
+        await dragTo(piece.id, piece.dropX, piece.dropY);
       }
       assert.equal(await root.locator('.neighborhood__piece--placed').count(), pieces.length);
       assert.match(await root.innerText(), /Γειτονιές που έφτιαξες:/);
