@@ -1,4 +1,5 @@
 import { ALL_COUNTRIES, getCountryByIsoNumeric } from '../src/data/countries';
+import { FLAG_STORIES } from '../src/data/flagStories/index';
 import topo from 'world-atlas/countries-50m.json';
 
 const errs: string[] = [];
@@ -108,6 +109,16 @@ while (queue.length) {
   for (const other of next) if (!reached.has(other)) { reached.add(other); queue.push(other); }
 }
 if (reached.size !== ALL_COUNTRIES.length) errs.push(`disconnected: ${ALL_COUNTRIES.filter(c => !reached.has(c.iso2)).map(c => c.iso2)}`);
+
+// «Η ιστορία της σημαίας»: μία παράγραφος για κάθε χώρα, ελληνικά, λογικό μήκος
+for (const c of ALL_COUNTRIES) {
+  const story = FLAG_STORIES[c.iso2];
+  if (!story) { errs.push(`no flag story ${c.iso2} (${c.nameGreek})`); continue; }
+  if (story.length < 120 || story.length > 480) warn.push(`flag story length ${story.length} ${c.iso2}`);
+  if (!/[α-ωάέήίόύώ]/.test(story)) errs.push(`flag story not Greek ${c.iso2}`);
+  if (/[a-zA-Z]{4,}/.test(story)) warn.push(`flag story has Latin text ${c.iso2}`);
+}
+for (const k of Object.keys(FLAG_STORIES)) if (!iso2s.has(k)) errs.push(`flag story for unknown iso2 ${k}`);
 
 if (errs.length) { console.log('\nERRORS:'); errs.forEach(e=>console.log(' -',e)); process.exit(1); }
 if (warn.length) { console.log('\nWarnings:'); warn.forEach(e=>console.log(' -',e)); }

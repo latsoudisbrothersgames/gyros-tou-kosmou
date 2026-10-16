@@ -406,6 +406,38 @@
   transition: background 400ms ease;
 }
 
+/* ── «Η ιστορία της σημαίας»: κάρτα με τη σημαία και μια σύντομη παράγραφο ── */
+.flagstory {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-4);
+  background: var(--surface);
+  border: 1px solid var(--cont-soft, var(--ocean-100));
+  border-left: 5px solid var(--cont-accent, var(--ocean-500));
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-sm);
+  padding: var(--space-3) var(--space-4);
+  transition: border-color 400ms ease;
+}
+
+.flagstory__flag {
+  flex: none;
+  margin-top: 4px;
+}
+
+.flagstory__text {
+  margin: 0;
+  line-height: 1.65;
+  color: var(--text-600);
+}
+
+@media (max-width: 480px) {
+  .flagstory {
+    flex-direction: column;
+    gap: var(--space-2);
+  }
+}
+
 .atlas__actions {
   display: flex;
   justify-content: center;

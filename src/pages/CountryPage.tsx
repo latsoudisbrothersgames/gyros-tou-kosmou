@@ -14,6 +14,7 @@ import { CountryBall } from '../components/CountryBall/CountryBall';
 import { CountrySilhouette } from '../components/GeoIdentity/CountrySilhouette';
 import { MiniGlobe } from '../components/GeoIdentity/MiniGlobe';
 import { Button } from '../components/Button/Button';
+import { getFlagStory } from '../data/flagStories';
 import './CountryPage.css';
 
 type StickerKind = 'capital' | 'continent' | 'population' | 'area' | 'currency' | 'languages';
@@ -107,6 +108,7 @@ export function CountryPage() {
   const owned = collection.has(country.iso2);
   const justDiscovered = owned && searchParams.get('discovered') === '1';
   const collectedCount = ALL_COUNTRIES.filter((c) => collection.has(c.iso2)).length;
+  const flagStory = getFlagStory(country.iso2);
 
   const stickers: { kind: StickerKind; label: string; value: string }[] = [
     { kind: 'capital', label: 'Πρωτεύουσα', value: country.capitalGreek },
@@ -222,6 +224,16 @@ export function CountryPage() {
                     </li>
                   ))}
                 </ul>
+              </>
+            )}
+
+            {flagStory && (
+              <>
+                <h2 className="atlas__section">Η ιστορία της σημαίας</h2>
+                <div className="flagstory">
+                  <Flag iso2={country.iso2} countryName={country.nameGreek} size="md" className="flagstory__flag" />
+                  <p className="flagstory__text">{flagStory}</p>
+                </div>
               </>
             )}
 
